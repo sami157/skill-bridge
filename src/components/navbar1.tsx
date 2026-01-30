@@ -145,7 +145,7 @@ const Navbar = ({
 }: Navbar1Props) => {
   return (
     <section className={cn("py-4", className)}>
-      <div className="container">
+      <div className="container px-1 md:px-0 mx-auto">
         {/* Desktop Menu */}
         <nav className="hidden items-center justify-between lg:flex">
           <div className="flex items-center gap-6">
@@ -183,9 +183,9 @@ const Navbar = ({
 
         {/* Mobile Menu */}
         <div className="block lg:hidden">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between w-full">
             {/* Logo */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center justify-between gap-4">
               <a href={logo.url} className="flex items-center gap-2">
                 <img
                   src={logo.src}
