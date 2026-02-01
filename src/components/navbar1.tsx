@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { Book, Menu, Sunset, Trees, Zap } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -151,6 +152,12 @@ const Navbar = ({
   onLogout,
   className,
 }: Navbar1Props) => {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
     <section className={cn("py-4", className)}>
       <div className="container px-1 md:px-0 mx-auto">
@@ -169,7 +176,7 @@ const Navbar = ({
                   {logo.title}
                 </span>
               </a>
-              <ModeToggle />
+              {mounted && <ModeToggle />}
             </div>
             <div className="flex items-center">
               <NavigationMenu>
@@ -215,60 +222,66 @@ const Navbar = ({
                   alt={logo.alt}
                 />
               </a>
-              <ModeToggle />
+              {mounted && <ModeToggle />}
             </div>
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <Menu className="size-4" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent className="overflow-y-auto">
-                <SheetHeader>
-                  <SheetTitle>
-                    <a href={logo.url} className="flex items-center gap-2">
-                      <img
-                        src={logo.src}
-                        className="max-h-8 dark:invert"
-                        alt={logo.alt}
-                      />
-                    </a>
-                  </SheetTitle>
-                </SheetHeader>
-                <div className="flex flex-col gap-6 p-4">
-                  <Accordion
-                    type="single"
-                    collapsible
-                    className="flex w-full flex-col gap-4"
-                  >
-                    {menu.map((item) => renderMobileMenuItem(item))}
-                  </Accordion>
+            {mounted ? (
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="icon">
+                    <Menu className="size-4" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent className="overflow-y-auto">
+                  <SheetHeader>
+                    <SheetTitle>
+                      <a href={logo.url} className="flex items-center gap-2">
+                        <img
+                          src={logo.src}
+                          className="max-h-8 dark:invert"
+                          alt={logo.alt}
+                        />
+                      </a>
+                    </SheetTitle>
+                  </SheetHeader>
+                  <div className="flex flex-col gap-6 p-4">
+                    <Accordion
+                      type="single"
+                      collapsible
+                      className="flex w-full flex-col gap-4"
+                    >
+                      {menu.map((item) => renderMobileMenuItem(item))}
+                    </Accordion>
 
-                  <div className="flex flex-col gap-3">
-                    {user ? (
-                      <>
-                        <div className="flex flex-col gap-1 mb-2">
-                          <span className="text-sm font-medium">{user.name || user.email}</span>
-                          <span className="text-xs text-muted-foreground capitalize">{user.role.toLowerCase()}</span>
-                        </div>
-                        <Button onClick={onLogout} variant="outline">
-                          Logout
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        <Button asChild variant="outline">
-                          <a href={auth.login.url}>{auth.login.title}</a>
-                        </Button>
-                        <Button asChild>
-                          <a href={auth.signup.url}>{auth.signup.title}</a>
-                        </Button>
-                      </>
-                    )}
+                    <div className="flex flex-col gap-3">
+                      {user ? (
+                        <>
+                          <div className="flex flex-col gap-1 mb-2">
+                            <span className="text-sm font-medium">{user.name || user.email}</span>
+                            <span className="text-xs text-muted-foreground capitalize">{user.role.toLowerCase()}</span>
+                          </div>
+                          <Button onClick={onLogout} variant="outline">
+                            Logout
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Button asChild variant="outline">
+                            <a href={auth.login.url}>{auth.login.title}</a>
+                          </Button>
+                          <Button asChild>
+                            <a href={auth.signup.url}>{auth.signup.title}</a>
+                          </Button>
+                        </>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </SheetContent>
-            </Sheet>
+                </SheetContent>
+              </Sheet>
+            ) : (
+              <Button variant="outline" size="icon" disabled>
+                <Menu className="size-4" />
+              </Button>
+            )}
           </div>
         </div>
       </div>

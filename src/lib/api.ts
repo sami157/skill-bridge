@@ -1,23 +1,32 @@
 /**
  * Central API client for Skill Bridge frontend
- * Uses BASE_URL from NEXT_PUBLIC_SERVER_ROOT_URL environment variable
+ * Uses BASE_URL from NEXT_PUBLIC_API_URL environment variable
+ * 
+ * Backend routes:
+ * - /tutors, /categories, /subjects, /bookings, /users (no /api prefix)
+ * - /api/auth/* (Better Auth routes with /api prefix)
  */
 
-// Get BASE_URL from environment variable
-const getBaseUrl = (): string => {
-  const baseUrl = process.env.NEXT_PUBLIC_SERVER_ROOT_URL;
-  
-  if (!baseUrl) {
-    throw new Error(
-      'NEXT_PUBLIC_SERVER_ROOT_URL is not set. Please add it to your .env file.\n' +
-      'Example: NEXT_PUBLIC_SERVER_ROOT_URL=http://localhost:3000'
-    );
-  }
-  
-  return baseUrl;
-};
+// Support legacy name as a fallback but prefer NEXT_PUBLIC_API_URL
+const rawBase =
+  process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_SERVER_ROOT_URL;
 
-export const BASE_URL = getBaseUrl();
+if (!rawBase) {
+  throw new Error(
+    'NEXT_PUBLIC_API_URL is not set. Please add it to your .env file.\n' +
+    'Example: NEXT_PUBLIC_API_URL=https://skill-bridge-server-eight.vercel.app'
+  );
+}
+
+// Normalize: remove trailing slash once
+export const BASE_URL = rawBase.replace(/\/$/, '');
+
+// Ensure exactly one slash between base and path
+const buildUrl = (base: string, path: string) => {
+  const cleanBase = base.replace(/\/$/, '');
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  return `${cleanBase}${cleanPath}`;
+};
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -34,9 +43,10 @@ export interface ApiError {
 
 /**
  * Helper function to make GET requests with automatic BASE_URL prefix
+ * Does NOT add /api prefix (except for /api/auth routes which should already have it)
  */
 export async function apiGet<T>(path: string): Promise<ApiResponse<T>> {
-  const url = `${BASE_URL}/api${path}`;
+  const url = buildUrl(BASE_URL, path);
   
   try {
     const response = await fetch(url, {
@@ -105,9 +115,10 @@ class ApiClient {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
-    // Ensure endpoint starts with /api (don't double-prefix if already has /api)
-    const apiEndpoint = endpoint.startsWith('/api') ? endpoint : `/api${endpoint}`;
-    const url = `${this.baseURL}${apiEndpoint}`;
+    // Only /api/auth routes have /api prefix, all other routes don't
+    // So we use the endpoint as-is (auth routes already have /api/auth prefix)
+    // All routes use NEXT_PUBLIC_API_URL as base URL
+    const url = buildUrl(this.baseURL, endpoint);
     
     const defaultHeaders: HeadersInit = {
       'Content-Type': 'application/json',
