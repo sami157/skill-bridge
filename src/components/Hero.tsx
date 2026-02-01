@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, BookOpen, Star, Users } from "lucide-react";
+import { HeroVisual } from "./HeroVisual";
 
 export function Hero() {
   return (
@@ -8,8 +9,8 @@ export function Hero() {
         className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(0,0,0,0.06),transparent_35%),radial-gradient(circle_at_80%_30%,rgba(0,0,0,0.05),transparent_32%),radial-gradient(circle_at_40%_80%,rgba(0,0,0,0.05),transparent_30%)] dark:bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.03),transparent_35%),radial-gradient(circle_at_80%_30%,rgba(255,255,255,0.02),transparent_32%),radial-gradient(circle_at_40%_80%,rgba(255,255,255,0.02),transparent_30%)]"
         aria-hidden
       />
-      <div className="relative mx-auto flex max-w-6xl flex-col gap-8 px-4 pb-20 pt-16 sm:px-6 lg:gap-10 lg:py-24">
-        <div className="max-w-2xl space-y-6">
+      <div className="relative mx-auto flex max-w-6xl flex-col gap-8 px-4 pb-20 pt-16 sm:px-6 lg:flex-row lg:items-center lg:gap-12 lg:py-24">
+        <div className="max-w-2xl space-y-6 flex-1">
           <div className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-lg shadow-primary/15">
             <Star className="h-4 w-4 text-amber-400" />
             <span>Find a tutor who moves at your speed</span>
@@ -47,6 +48,11 @@ export function Hero() {
               <BookOpen className="h-4 w-4" /> Project-first learning
             </span>
           </div>
+        </div>
+        
+        {/* Hero Visual - Right Side */}
+        <div className="flex-1 flex items-center justify-start lg:justify-center">
+          <HeroVisual />
         </div>
       </div>
     </section>
