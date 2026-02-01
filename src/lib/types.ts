@@ -133,3 +133,4 @@ export interface AvailabilitySlot {
   startTime: string; // HH:mm
   endTime: string; // HH:mm
 }
+
