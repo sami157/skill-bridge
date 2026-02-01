@@ -3,7 +3,7 @@
  */
 
 import { api } from './api';
-import type { TutorsResponse, CategoriesResponse, TutorsFilters, TutorProfile, TutorProfileDetail, Category, BookingRequest, BookingResponse, Booking } from './types';
+import type { TutorsResponse, CategoriesResponse, TutorsFilters, TutorProfile, TutorProfileDetail, Category, BookingRequest, BookingResponse, Booking, BookingsResponse, ReviewRequest, Review } from './types';
 
 /**
  * Fetch tutors with optional filters
@@ -63,5 +63,47 @@ export async function createBooking(booking: BookingRequest): Promise<BookingRes
     data: response.data,
     message: response.message,
     details: response.details,
+  };
+}
+
+/**
+ * Fetch bookings for current user
+ */
+export async function fetchBookings(status?: 'CONFIRMED' | 'COMPLETED' | 'CANCELLED'): Promise<BookingsResponse> {
+  const endpoint = status ? `/bookings?status=${status}` : '/bookings';
+  const response = await api.get<Booking[]>(endpoint);
+  return {
+    success: response.success,
+    data: response.data || [],
+    message: response.message,
+  };
+}
+
+/**
+ * Cancel a booking
+ */
+export async function cancelBooking(bookingId: string): Promise<BookingResponse> {
+  const response = await api.patch<Booking>(`/bookings/${bookingId}/cancel`);
+  return {
+    success: response.success,
+    data: response.data,
+    message: response.message,
+    details: response.details,
+  };
+}
+
+/**
+ * Create a review for a completed booking
+ */
+export async function createReview(review: ReviewRequest): Promise<{ success: boolean; data?: Review; message?: string }> {
+  const response = await api.post<Review>(`/bookings/${review.bookingId}/review`, {
+    bookingId: review.bookingId,
+    rating: review.rating,
+    comment: review.comment,
+  });
+  return {
+    success: response.success,
+    data: response.data,
+    message: response.message,
   };
 }

@@ -87,6 +87,17 @@ export interface Booking {
   status: 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
   createdAt: string;
   updatedAt: string;
+  student?: TutorUser;
+  tutor?: {
+    id: string;
+    userId: string;
+    bio?: string;
+    pricePerHour: number;
+    rating: number;
+    reviewCount: number;
+    user: TutorUser;
+  };
+  review?: Review | null;
 }
 
 export interface BookingResponse {
@@ -94,4 +105,16 @@ export interface BookingResponse {
   data?: Booking;
   message?: string;
   details?: unknown;
+}
+
+export interface BookingsResponse {
+  success: boolean;
+  data: Booking[];
+  message?: string;
+}
+
+export interface ReviewRequest {
+  bookingId: string;
+  rating: number;
+  comment?: string;
 }
