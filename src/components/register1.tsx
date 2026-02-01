@@ -1,80 +1,319 @@
-import { cn } from "@/lib/utils";
+'use client';
 
+import { useState, FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import { authClient } from "@/lib/auth-client";
+import { signUp } from "@/lib/auth";
 
-interface Login1Props {
+interface Register1Props {
   heading?: string;
   buttonText?: string;
-  googleText?: string;
   signupText?: string;
   signupUrl?: string;
   className?: string;
 }
 
+type Role = 'STUDENT' | 'TUTOR';
+
 const Register1 = ({
   heading = "Register",
   buttonText = "Register",
   signupText = "Already have an account?",
-  signupUrl = `${process.env.CLIENT_ROOT_URL}/login`,
+  signupUrl = "/login",
   className,
-}: Login1Props) => {
-  // const handleRegister = () => {
-  //   const { data, error } = await authClient.signUp.email({
-  //     email, // user email address
-  //     password, // user password -> min 8 characters by default
-  //     name, // user display name
-  //     image, // User image URL (optional)
-  //     callbackURL: "/dashboard" // A URL to redirect to after the user verifies their email (optional)
-  //   }, {
-  //     onRequest: (ctx) => {
-  //       //show loading
-  //     },
-  //     onSuccess: (ctx) => {
-  //       //redirect to the dashboard or sign in page
-  //     },
-  //     onError: (ctx) => {
-  //       // display the error message
-  //       alert(ctx.error.message);
-  //     },
-  //   });
-  // }
+}: Register1Props) => {
+  const router = useRouter();
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [image, setImage] = useState('');
+  const [role, setRole] = useState<Role>('STUDENT');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string | null>>({});
+
+  const validateField = (field: string, value: string): string | null => {
+    switch (field) {
+      case 'name':
+        if (!value.trim()) {
+          return 'Name is required';
+        }
+        if (value.trim().length < 2) {
+          return 'Name must be at least 2 characters';
+        }
+        return null;
+      case 'email':
+        if (!value) {
+          return 'Email is required';
+        }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(value)) {
+          return 'Please enter a valid email address';
+        }
+        return null;
+      case 'password':
+        if (!value) {
+          return 'Password is required';
+        }
+        if (value.length < 8) {
+          return 'Password must be at least 8 characters';
+        }
+        return null;
+      case 'confirmPassword':
+        if (!value) {
+          return 'Please confirm your password';
+        }
+        if (value !== password) {
+          return 'Passwords do not match';
+        }
+        return null;
+      case 'image':
+        if (value && !value.startsWith('http://') && !value.startsWith('https://')) {
+          return 'Please enter a valid URL';
+        }
+        return null;
+      default:
+        return null;
+    }
+  };
+
+  const handleFieldChange = (field: string, value: string) => {
+    setFieldErrors((prev) => {
+      const newErrors = { ...prev };
+      if (newErrors[field]) {
+        delete newErrors[field];
+      }
+      return newErrors;
+    });
+    setError(null);
+
+    switch (field) {
+      case 'name':
+        setName(value);
+        break;
+      case 'email':
+        setEmail(value);
+        break;
+      case 'password':
+        setPassword(value);
+        // Also validate confirm password if it's already filled
+        if (confirmPassword) {
+          const confirmError = validateField('confirmPassword', confirmPassword);
+          setFieldErrors((prev) => {
+            const newErrors = { ...prev };
+            if (confirmError) {
+              newErrors.confirmPassword = confirmError;
+            } else {
+              delete newErrors.confirmPassword;
+            }
+            return newErrors;
+          });
+        }
+        break;
+      case 'confirmPassword':
+        setConfirmPassword(value);
+        break;
+      case 'image':
+        setImage(value);
+        break;
+    }
+  };
+
+  const handleBlur = (field: string, value: string) => {
+    const error = validateField(field, value);
+    if (error) {
+      setFieldErrors((prev) => ({ ...prev, [field]: error }));
+    }
+  };
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setError(null);
+    setFieldErrors({});
+
+    // Validate all fields
+    const nameError = validateField('name', name);
+    const emailError = validateField('email', email);
+    const passwordError = validateField('password', password);
+    const confirmPasswordError = validateField('confirmPassword', confirmPassword);
+    const imageError = image ? validateField('image', image) : null;
+
+    if (nameError || emailError || passwordError || confirmPasswordError || imageError) {
+      setFieldErrors({
+        ...(nameError && { name: nameError }),
+        ...(emailError && { email: emailError }),
+        ...(passwordError && { password: passwordError }),
+        ...(confirmPasswordError && { confirmPassword: confirmPasswordError }),
+        ...(imageError && { image: imageError }),
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await signUp({
+        name: name.trim(),
+        email: email.trim(),
+        password,
+        image: image.trim() || undefined,
+        role: role,
+      });
+
+      if (response.success && response.data?.user) {
+        const user = response.data.user;
+        
+        // Redirect based on role
+        if (user.role === 'STUDENT') {
+          router.push('/dashboard');
+        } else if (user.role === 'TUTOR') {
+          router.push('/tutor/dashboard');
+        } else if (user.role === 'ADMIN') {
+          router.push('/admin');
+        } else {
+          router.push('/');
+        }
+        
+        // Refresh the page to update auth state
+        router.refresh();
+      } else {
+        setError(response.message || 'Registration failed. Please try again.');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <section className={cn("h-screen w-screen bg-muted", className)}>
       <div className="flex h-full items-center justify-center">
-        {/* Logo */}
         <div className="flex flex-col items-center gap-6 lg:justify-start">
-          <div className="flex w-full max-w-sm min-w-sm flex-col items-center gap-y-4 rounded-lg border border-muted bg-background px-6 py-8 shadow-md">
+          <form
+            onSubmit={handleSubmit}
+            className="flex w-full max-w-sm min-w-sm flex-col items-center gap-y-4 rounded-lg border border-muted bg-background px-6 py-8 shadow-md"
+          >
             {heading && <h1 className="text-xl font-semibold">{heading}</h1>}
-            <Input
-              type="text"
-              placeholder="Name"
-              className="text-sm"
-              required
-            />
-            <Input
-              type="email"
-              placeholder="Email"
-              className="text-sm"
-              required
-            />
-            <Input
-              type="url"
-              placeholder="Profile Picture URL (optional)"
-              className="text-sm"
-            />
-            <Input
-              type="password"
-              placeholder="Password"
-              className="text-sm"
-              required
-            />
-            <Button type="submit" className="w-full rounded-2xl">
-              {buttonText}
+            
+            <div className="w-full">
+              <Input
+                type="text"
+                placeholder="Name"
+                className={cn("text-sm", fieldErrors.name && "border-destructive")}
+                value={name}
+                onChange={(e) => handleFieldChange('name', e.target.value)}
+                onBlur={(e) => handleBlur('name', e.target.value)}
+                disabled={loading}
+                required
+              />
+              {fieldErrors.name && (
+                <p className="mt-1 text-xs text-destructive">{fieldErrors.name}</p>
+              )}
+            </div>
+
+            <div className="w-full">
+              <Input
+                type="email"
+                placeholder="Email"
+                className={cn("text-sm", fieldErrors.email && "border-destructive")}
+                value={email}
+                onChange={(e) => handleFieldChange('email', e.target.value)}
+                onBlur={(e) => handleBlur('email', e.target.value)}
+                disabled={loading}
+                required
+              />
+              {fieldErrors.email && (
+                <p className="mt-1 text-xs text-destructive">{fieldErrors.email}</p>
+              )}
+            </div>
+
+            <div className="w-full">
+              <label className="mb-2 block text-sm font-medium">Role</label>
+              <select
+                value={role}
+                onChange={(e) => setRole(e.target.value as Role)}
+                disabled={loading}
+                className={cn(
+                  "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background",
+                  "file:border-0 file:bg-transparent file:text-sm file:font-medium",
+                  "placeholder:text-muted-foreground",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                  "disabled:cursor-not-allowed disabled:opacity-50"
+                )}
+                required
+              >
+                <option value="STUDENT">Student</option>
+                <option value="TUTOR">Tutor</option>
+              </select>
+            </div>
+
+            <div className="w-full">
+              <Input
+                type="url"
+                placeholder="Profile Picture URL (optional)"
+                className={cn("text-sm", fieldErrors.image && "border-destructive")}
+                value={image}
+                onChange={(e) => handleFieldChange('image', e.target.value)}
+                onBlur={(e) => handleBlur('image', e.target.value)}
+                disabled={loading}
+              />
+              {fieldErrors.image && (
+                <p className="mt-1 text-xs text-destructive">{fieldErrors.image}</p>
+              )}
+            </div>
+
+            <div className="w-full">
+              <Input
+                type="password"
+                placeholder="Password"
+                className={cn("text-sm", fieldErrors.password && "border-destructive")}
+                value={password}
+                onChange={(e) => handleFieldChange('password', e.target.value)}
+                onBlur={(e) => handleBlur('password', e.target.value)}
+                disabled={loading}
+                required
+              />
+              {fieldErrors.password && (
+                <p className="mt-1 text-xs text-destructive">{fieldErrors.password}</p>
+              )}
+            </div>
+
+            <div className="w-full">
+              <Input
+                type="password"
+                placeholder="Confirm Password"
+                className={cn("text-sm", fieldErrors.confirmPassword && "border-destructive")}
+                value={confirmPassword}
+                onChange={(e) => handleFieldChange('confirmPassword', e.target.value)}
+                onBlur={(e) => handleBlur('confirmPassword', e.target.value)}
+                disabled={loading}
+                required
+              />
+              {fieldErrors.confirmPassword && (
+                <p className="mt-1 text-xs text-destructive">{fieldErrors.confirmPassword}</p>
+              )}
+            </div>
+
+            {error && (
+              <div className="w-full rounded-md bg-destructive/10 p-3">
+                <p className="text-sm text-destructive">{error}</p>
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              className="w-full rounded-2xl"
+              disabled={loading}
+            >
+              {loading ? 'Registering...' : buttonText}
             </Button>
-          </div>
+          </form>
+          
           <div className="flex justify-center gap-1 text-sm text-muted-foreground">
             <p>{signupText}</p>
             <Link

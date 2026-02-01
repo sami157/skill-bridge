@@ -56,6 +56,12 @@ interface Navbar1Props {
       url: string;
     };
   };
+  user?: {
+    name: string;
+    email: string;
+    role: string;
+  };
+  onLogout?: () => void;
 }
 
 const Navbar = ({
@@ -141,6 +147,8 @@ const Navbar = ({
     login: { title: "Login", url: "#" },
     signup: { title: "Sign up", url: "#" },
   },
+  user,
+  onLogout,
   className,
 }: Navbar1Props) => {
   return (
@@ -171,13 +179,27 @@ const Navbar = ({
               </NavigationMenu>
             </div>
           </div>
-          <div className="flex gap-2">
-            <Button asChild variant="outline" size="sm">
-              <a href={auth.login.url}>{auth.login.title}</a>
-            </Button>
-            <Button asChild size="sm">
-              <a href={auth.signup.url}>{auth.signup.title}</a>
-            </Button>
+          <div className="flex gap-2 items-center">
+            {user ? (
+              <>
+                <div className="flex flex-col items-end mr-2">
+                  <span className="text-sm font-medium">{user.name || user.email}</span>
+                  <span className="text-xs text-muted-foreground capitalize">{user.role.toLowerCase()}</span>
+                </div>
+                <Button onClick={onLogout} variant="outline" size="sm">
+                  Logout
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button asChild variant="outline" size="sm">
+                  <a href={auth.login.url}>{auth.login.title}</a>
+                </Button>
+                <Button asChild size="sm">
+                  <a href={auth.signup.url}>{auth.signup.title}</a>
+                </Button>
+              </>
+            )}
           </div>
         </nav>
 
@@ -223,12 +245,26 @@ const Navbar = ({
                   </Accordion>
 
                   <div className="flex flex-col gap-3">
-                    <Button asChild variant="outline">
-                      <a href={auth.login.url}>{auth.login.title}</a>
-                    </Button>
-                    <Button asChild>
-                      <a href={auth.signup.url}>{auth.signup.title}</a>
-                    </Button>
+                    {user ? (
+                      <>
+                        <div className="flex flex-col gap-1 mb-2">
+                          <span className="text-sm font-medium">{user.name || user.email}</span>
+                          <span className="text-xs text-muted-foreground capitalize">{user.role.toLowerCase()}</span>
+                        </div>
+                        <Button onClick={onLogout} variant="outline">
+                          Logout
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button asChild variant="outline">
+                          <a href={auth.login.url}>{auth.login.title}</a>
+                        </Button>
+                        <Button asChild>
+                          <a href={auth.signup.url}>{auth.signup.title}</a>
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
               </SheetContent>

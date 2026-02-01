@@ -43,12 +43,14 @@ export async function signUp(data: {
   email: string;
   password: string;
   image?: string;
+  role?: 'STUDENT' | 'TUTOR';
 }) {
   return api.post<{ user: User }>('/api/auth/sign-up/email', {
     name: data.name,
     email: data.email,
     password: data.password,
     image: data.image,
+    role: data.role || 'STUDENT',
   });
 }
 
