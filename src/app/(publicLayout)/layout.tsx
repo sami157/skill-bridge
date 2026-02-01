@@ -26,20 +26,6 @@ export default function PublicLayout({
     return (
         <div>
             <Navbar
-                logo={{
-                    url: "/",
-                    src: "/next.svg",
-                    alt: "Skill Bridge",
-                    title: "Skill Bridge",
-                }}
-                menu={[
-                    { title: "Home", url: "/" },
-                    { title: "Tutors", url: "/tutors" },
-                ]}
-                auth={{
-                    login: { title: "Login", url: "/login" },
-                    signup: { title: "Register", url: "/register" },
-                }}
                 user={!loading && user ? {
                     name: user.name,
                     email: user.email,
