@@ -17,6 +17,7 @@ export default function StudentBookingsPage() {
   const [showReviewForm, setShowReviewForm] = useState<string | null>(null);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewComment, setReviewComment] = useState('');
+  const [reviewError, setReviewError] = useState<string | null>(null);
 
   useEffect(() => {
     loadBookings();
@@ -63,13 +64,33 @@ export default function StudentBookingsPage() {
   };
 
   const handleSubmitReview = async (bookingId: string) => {
+    // Validate booking is COMPLETED
+    const booking = bookings.find(b => b.id === bookingId);
+    if (!booking) {
+      setReviewError('Booking not found');
+      return;
+    }
+
+    if (booking.status !== 'COMPLETED') {
+      setReviewError('Only completed bookings can be reviewed');
+      return;
+    }
+
+    if (booking.review) {
+      setReviewError('You have already reviewed this booking');
+      return;
+    }
+
+    // Validate rating
     if (!reviewRating || reviewRating < 1 || reviewRating > 5) {
-      alert('Please select a rating between 1 and 5');
+      setReviewError('Please select a rating between 1 and 5');
       return;
     }
 
     try {
       setReviewingId(bookingId);
+      setReviewError(null);
+      
       const response = await createReview({
         bookingId,
         rating: reviewRating,
@@ -80,13 +101,28 @@ export default function StudentBookingsPage() {
         setShowReviewForm(null);
         setReviewRating(5);
         setReviewComment('');
+        setReviewError(null);
         // Reload bookings to get updated review
         await loadBookings();
       } else {
-        alert(response.message || 'Failed to submit review');
+        // Handle specific error messages
+        const errorMessage = response.message || 'Failed to submit review';
+        
+        // Check for duplicate review error
+        if (errorMessage.toLowerCase().includes('already exists') || 
+            errorMessage.toLowerCase().includes('already reviewed')) {
+          setReviewError('You have already reviewed this booking');
+          // Reload to get the existing review
+          await loadBookings();
+        } else if (errorMessage.toLowerCase().includes('must be completed')) {
+          setReviewError('Only completed bookings can be reviewed');
+        } else {
+          setReviewError(errorMessage);
+        }
       }
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'An error occurred');
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred';
+      setReviewError(errorMessage);
     } finally {
       setReviewingId(null);
     }
@@ -240,7 +276,12 @@ export default function StudentBookingsPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setShowReviewForm(showReviewForm === booking.id ? null : booking.id)}
+            onClick={() => {
+              setShowReviewForm(showReviewForm === booking.id ? null : booking.id);
+              setReviewError(null);
+              setReviewRating(5);
+              setReviewComment('');
+            }}
           >
             <MessageSquare className="mr-2 h-4 w-4" />
             Leave Review
@@ -249,19 +290,33 @@ export default function StudentBookingsPage() {
       </div>
 
       {/* Review Form */}
-      {showReviewForm === booking.id && (
+      {showReviewForm === booking.id && booking.status === 'COMPLETED' && !booking.review && (
         <div className="mt-4 p-4 border rounded-lg bg-muted/50">
           <h4 className="font-medium mb-3">Write a Review</h4>
+          
+          {/* Error Message */}
+          {reviewError && (
+            <div className="mb-3 p-3 bg-destructive/10 border border-destructive/20 rounded-md">
+              <p className="text-sm text-destructive">{reviewError}</p>
+            </div>
+          )}
+
           <div className="space-y-3">
             <div>
-              <label className="text-sm font-medium mb-2 block">Rating</label>
+              <label className="text-sm font-medium mb-2 block">
+                Rating <span className="text-destructive">*</span>
+              </label>
               <div className="flex gap-1">
                 {[1, 2, 3, 4, 5].map((rating) => (
                   <button
                     key={rating}
                     type="button"
-                    onClick={() => setReviewRating(rating)}
-                    className="focus:outline-none"
+                    onClick={() => {
+                      setReviewRating(rating);
+                      setReviewError(null);
+                    }}
+                    className="focus:outline-none transition-transform hover:scale-110"
+                    disabled={reviewingId === booking.id}
                   >
                     <Star
                       className={`h-6 w-6 ${
@@ -273,22 +328,27 @@ export default function StudentBookingsPage() {
                   </button>
                 ))}
               </div>
+              <p className="text-xs text-muted-foreground mt-1">Select a rating from 1 to 5 stars</p>
             </div>
             <div>
               <label className="text-sm font-medium mb-2 block">Comment (optional)</label>
               <textarea
                 value={reviewComment}
-                onChange={(e) => setReviewComment(e.target.value)}
+                onChange={(e) => {
+                  setReviewComment(e.target.value);
+                  setReviewError(null);
+                }}
                 placeholder="Share your experience..."
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[80px]"
                 rows={3}
+                disabled={reviewingId === booking.id}
               />
             </div>
             <div className="flex gap-2">
               <Button
                 size="sm"
                 onClick={() => handleSubmitReview(booking.id)}
-                disabled={reviewingId === booking.id}
+                disabled={reviewingId === booking.id || !reviewRating}
               >
                 {reviewingId === booking.id ? (
                   <>
@@ -309,7 +369,9 @@ export default function StudentBookingsPage() {
                   setShowReviewForm(null);
                   setReviewRating(5);
                   setReviewComment('');
+                  setReviewError(null);
                 }}
+                disabled={reviewingId === booking.id}
               >
                 Cancel
               </Button>
