@@ -57,7 +57,7 @@ export function Navbar({ user, onLogout }: NavbarProps) {
                     "rounded-md px-3 py-2 text-sm font-medium transition",
                     active
                       ? "bg-neutral-900 text-white shadow-sm"
-                      : "text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100"
+                      : "text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900"
                   )}
                 >
                   {item.title}
@@ -71,7 +71,7 @@ export function Navbar({ user, onLogout }: NavbarProps) {
   );
 
   return (
-    <header className="sticky top-0 z-50 border-b border-black/5 bg-white/70 backdrop-blur supports-[backdrop-filter]:backdrop-blur-md">
+    <header className="sticky top-0 z-50 border-b border-neutral-200/80 bg-white/90 backdrop-blur-sm supports-[backdrop-filter]:backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
         <div className="flex items-center gap-10">
           <Link href="/" className="group flex items-center gap-2">
