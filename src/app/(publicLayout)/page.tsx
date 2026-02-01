@@ -1,42 +1,11 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from "next/link";
-import { ArrowRight, Clock3, Sparkles, Users } from "lucide-react";
+import { ArrowRight, Clock3, Sparkles, Users, Star, Loader2 } from "lucide-react";
 import { Hero } from "@/components/Hero";
-
-const tutors = [
-  {
-    name: "Amira Khan",
-    subject: "Data Structures & Algorithms",
-    badge: "Top Rated",
-    rating: 4.9,
-    students: 320,
-    blurb: "Ex-FAANG engineer turning complex topics into clear mental models.",
-  },
-  {
-    name: "Leo Martinez",
-    subject: "Product Design & Figma",
-    badge: "Portfolio Ready",
-    rating: 4.8,
-    students: 210,
-    blurb: "Design sprints, critique sessions, and hands-on component libraries.",
-  },
-  {
-    name: "Priya Desai",
-    subject: "Machine Learning",
-    badge: "Career Switch",
-    rating: 4.9,
-    students: 265,
-    blurb: "Structured ML roadmap with weekly projects and interview prep.",
-  },
-];
-
-const categories = [
-  "Software Engineering",
-  "Data & AI",
-  "Product & Design",
-  "Career Coaching",
-  "Business & Ops",
-  "Marketing & Growth",
-];
+import { fetchTutors, fetchCategories } from '@/lib/tutors';
+import type { TutorProfile, Category } from '@/lib/types';
 
 const steps = [
   {
@@ -57,17 +26,46 @@ const steps = [
 ];
 
 export default function Home() {
+  const [featuredTutors, setFeaturedTutors] = useState<TutorProfile[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        // Fetch top-rated tutors (limit to 3 for featured section)
+        const tutorsResponse = await fetchTutors({ sortBy: 'rating_desc' });
+        if (tutorsResponse.success && tutorsResponse.data) {
+          setFeaturedTutors(tutorsResponse.data.slice(0, 3));
+        }
+
+        // Fetch categories
+        const categoriesResponse = await fetchCategories();
+        if (categoriesResponse.success && categoriesResponse.data) {
+          setCategories(categoriesResponse.data);
+        }
+      } catch (err) {
+        console.error('Failed to load homepage data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
   return (
-    <div className="bg-gradient-to-br from-neutral-100 via-white to-neutral-200 text-neutral-900">
+    <div className="bg-gradient-to-br from-neutral-100 via-white to-neutral-200 dark:from-neutral-950 dark:via-neutral-900 dark:to-neutral-800 text-foreground">
       <Hero />
 
       {/* About */}
-      <section className="border-y border-neutral-200 bg-white/80 backdrop-blur">
+      <section className="border-y border-border bg-card/80 backdrop-blur">
         <div className="mx-auto grid max-w-6xl items-start gap-10 px-4 py-16 md:grid-cols-3">
           <div className="md:col-span-2 space-y-4">
-            <p className="text-sm uppercase tracking-[0.2em] text-neutral-500">About</p>
-            <h2 className="text-3xl font-semibold text-neutral-950">Human tutors, crafted pathways.</h2>
-            <p className="text-neutral-600 leading-relaxed">
+            <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">About</p>
+            <h2 className="text-3xl font-semibold text-foreground">Human tutors, crafted pathways.</h2>
+            <p className="text-muted-foreground leading-relaxed">
               We hand-match learners with mentors who have built the things you want to build. Expect structured milestones, async feedback between sessions, and clear next steps after every meeting.
             </p>
             <div className="grid gap-4 sm:grid-cols-2">
@@ -75,23 +73,23 @@ export default function Home() {
               <FeatureCard title="Built-in accountability" copy="Weekly goals, check-ins, and progress snapshots keep you moving." />
             </div>
           </div>
-          <div className="rounded-2xl border border-neutral-200 bg-gradient-to-b from-neutral-50 to-white p-6 shadow-sm">
-            <p className="text-sm font-medium text-neutral-500 mb-2">Snapshot</p>
-            <dl className="space-y-4 text-neutral-900">
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+            <p className="text-sm font-medium text-muted-foreground mb-2">Snapshot</p>
+            <dl className="space-y-4 text-foreground">
               <div className="flex items-center justify-between">
-                <dt className="text-sm text-neutral-500">Average response</dt>
+                <dt className="text-sm text-muted-foreground">Average response</dt>
                 <dd className="font-semibold">&lt; 3 hours</dd>
               </div>
               <div className="flex items-center justify-between">
-                <dt className="text-sm text-neutral-500">Session length</dt>
+                <dt className="text-sm text-muted-foreground">Session length</dt>
                 <dd className="font-semibold">45–90 mins</dd>
               </div>
               <div className="flex items-center justify-between">
-                <dt className="text-sm text-neutral-500">Project support</dt>
+                <dt className="text-sm text-muted-foreground">Project support</dt>
                 <dd className="font-semibold">Included</dd>
               </div>
               <div className="flex items-center justify-between">
-                <dt className="text-sm text-neutral-500">Cancel policy</dt>
+                <dt className="text-sm text-muted-foreground">Cancel policy</dt>
                 <dd className="font-semibold">Flexible, 12h</dd>
               </div>
             </dl>
@@ -103,11 +101,11 @@ export default function Home() {
       <section className="container mx-auto px-4 py-16">
         <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-6 md:flex-row md:items-center">
           <div>
-            <p className="text-sm uppercase tracking-[0.2em] text-neutral-500">How it works</p>
-            <h2 className="text-3xl font-semibold text-neutral-950">Book a tutor in three steps.</h2>
-            <p className="text-neutral-600 mt-2 max-w-xl">No endless browsing. Tell us what you need, get matched, and start learning this week.</p>
+            <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">How it works</p>
+            <h2 className="text-3xl font-semibold text-foreground">Book a tutor in three steps.</h2>
+            <p className="text-muted-foreground mt-2 max-w-xl">No endless browsing. Tell us what you need, get matched, and start learning this week.</p>
           </div>
-          <a href="/login" className="inline-flex items-center gap-2 text-sm font-semibold text-neutral-900 underline decoration-neutral-400 underline-offset-4 hover:decoration-neutral-800">
+          <a href="/login" className="inline-flex items-center gap-2 text-sm font-semibold text-foreground underline decoration-muted-foreground underline-offset-4 hover:decoration-foreground">
             View your dashboard
             <ArrowRight className="h-4 w-4" />
           </a>
@@ -116,65 +114,101 @@ export default function Home() {
           {steps.map((step) => (
             <div
               key={step.title}
-              className="rounded-2xl border border-neutral-200 bg-white/90 p-6 shadow-sm backdrop-blur"
+              className="rounded-2xl border border-border bg-card p-6 shadow-sm"
             >
               <div className="flex items-center justify-between">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-neutral-900 text-white">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground">
                   {step.icon}
                 </div>
-                <ArrowRight className="h-4 w-4 text-neutral-300" />
+                <ArrowRight className="h-4 w-4 text-muted-foreground" />
               </div>
-              <h3 className="mt-4 text-lg font-semibold text-neutral-950">{step.title}</h3>
-              <p className="mt-2 text-sm text-neutral-600">{step.copy}</p>
+              <h3 className="mt-4 text-lg font-semibold text-foreground">{step.title}</h3>
+              <p className="mt-2 text-sm text-muted-foreground">{step.copy}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* Tutors */}
-      <section className="border-t border-b border-neutral-200 bg-white/90 backdrop-blur">
+      <section className="border-t border-b border-border bg-card/90 backdrop-blur">
         <div className="mx-auto max-w-6xl px-4 py-16">
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row md:items-end">
             <div>
-              <p className="text-sm uppercase tracking-[0.2em] text-neutral-500">Featured tutors</p>
-              <h2 className="text-3xl font-semibold text-neutral-950">Handpicked mentors ready this week.</h2>
+              <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">Featured tutors</p>
+              <h2 className="text-3xl font-semibold text-foreground">Handpicked mentors ready this week.</h2>
             </div>
             <Link
               href="/tutors"
-              className="inline-flex items-center gap-2 text-sm font-semibold text-neutral-900 underline decoration-neutral-400 underline-offset-4 hover:decoration-neutral-800"
+              className="inline-flex items-center gap-2 text-sm font-semibold text-foreground underline decoration-muted-foreground underline-offset-4 hover:decoration-foreground"
             >
               See all tutors
               <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
-          <div className="mt-10 grid gap-6 md:grid-cols-3">
-            {tutors.map((tutor) => (
-              <article
-                key={tutor.name}
-                className="group relative rounded-2xl border border-neutral-200 bg-gradient-to-b from-neutral-50 via-white to-neutral-100 p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
-              >
-                <div className="absolute inset-0 pointer-events-none rounded-2xl bg-[radial-gradient(circle_at_70%_20%,rgba(0,0,0,0.04),transparent_45%)] opacity-0 transition group-hover:opacity-100" />
-                <div className="flex items-start justify-between">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.18em] text-neutral-500">{tutor.badge}</p>
-                    <h3 className="mt-2 text-xl font-semibold text-neutral-950">{tutor.name}</h3>
-                    <p className="text-sm text-neutral-600">{tutor.subject}</p>
-                  </div>
-                  <span className="rounded-full bg-neutral-900 px-3 py-1 text-xs font-medium text-white shadow-sm">{tutor.rating} ★</span>
+          {loading ? (
+            <div className="mt-10 grid gap-6 md:grid-cols-3">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="rounded-2xl border border-border bg-card p-6 shadow-sm animate-pulse">
+                  <div className="h-4 bg-muted rounded w-1/2 mb-2"></div>
+                  <div className="h-6 bg-muted rounded w-3/4 mb-2"></div>
+                  <div className="h-4 bg-muted rounded w-1/2 mb-4"></div>
+                  <div className="h-3 bg-muted rounded w-full mb-2"></div>
+                  <div className="h-3 bg-muted rounded w-2/3"></div>
                 </div>
-                <p className="mt-4 text-sm text-neutral-700 leading-relaxed">{tutor.blurb}</p>
-                <div className="mt-5 flex items-center justify-between text-sm text-neutral-600">
-                  <span className="flex items-center gap-2"><Users className="h-4 w-4" /> {tutor.students} students</span>
-                  <Link
-                    href="/tutors"
-                    className="inline-flex items-center gap-1 text-neutral-900 font-medium"
+              ))}
+            </div>
+          ) : featuredTutors.length > 0 ? (
+            <div className="mt-10 grid gap-6 md:grid-cols-3">
+              {featuredTutors.map((tutor) => {
+                const mainSubject = tutor.subjects?.[0];
+                const subjectName = mainSubject?.name || 'Tutoring';
+                const categoryName = mainSubject?.category?.name || '';
+                return (
+                  <article
+                    key={tutor.id}
+                    className="group relative rounded-2xl border border-border bg-card p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
                   >
-                    Book session <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </div>
-              </article>
-            ))}
-          </div>
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        {categoryName && (
+                          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{categoryName}</p>
+                        )}
+                        <h3 className="mt-2 text-xl font-semibold text-foreground">{tutor.user.name}</h3>
+                        <p className="text-sm text-muted-foreground">{subjectName}</p>
+                      </div>
+                      <span className="flex items-center gap-1 rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground shadow-sm">
+                        <Star className="h-3 w-3 fill-current" />
+                        {tutor.rating.toFixed(1)}
+                      </span>
+                    </div>
+                    {tutor.bio && (
+                      <p className="mt-4 text-sm text-muted-foreground leading-relaxed line-clamp-2">{tutor.bio}</p>
+                    )}
+                    <div className="mt-5 flex items-center justify-between text-sm text-muted-foreground">
+                      <span className="flex items-center gap-2">
+                        <Users className="h-4 w-4" /> 
+                        {tutor.reviewCount} {tutor.reviewCount === 1 ? 'review' : 'reviews'}
+                      </span>
+                      <Link
+                        href={`/tutors/${tutor.id}`}
+                        className="inline-flex items-center gap-1 text-foreground font-medium hover:underline"
+                      >
+                        Book session <ArrowRight className="h-4 w-4" />
+                      </Link>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="mt-10 text-center py-12">
+              <p className="text-muted-foreground">No featured tutors available at the moment.</p>
+              <Link href="/tutors" className="inline-flex items-center gap-2 mt-4 text-sm font-semibold text-foreground underline decoration-muted-foreground underline-offset-4 hover:decoration-foreground">
+                Browse all tutors
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 
@@ -182,47 +216,65 @@ export default function Home() {
       <section className="container mx-auto px-4 py-16">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 md:flex-row md:items-end">
           <div>
-            <p className="text-sm uppercase tracking-[0.2em] text-neutral-500">Categories</p>
-            <h2 className="text-3xl font-semibold text-neutral-950">Choose a track to get started.</h2>
+            <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">Categories</p>
+            <h2 className="text-3xl font-semibold text-foreground">Choose a track to get started.</h2>
           </div>
           <Link
             href="/register"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-neutral-900 underline decoration-neutral-400 underline-offset-4 hover:decoration-neutral-800"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-foreground underline decoration-muted-foreground underline-offset-4 hover:decoration-foreground"
           >
             Start matching
             <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
-        <div className="mx-auto mt-8 grid max-w-6xl gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {categories.map((category) => (
-            <div
-              key={category}
-              className="rounded-xl border border-neutral-200 bg-white/90 p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-            >
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold text-neutral-950">{category}</h3>
-                <ArrowRight className="h-4 w-4 text-neutral-400" />
+        {loading ? (
+          <div className="mx-auto mt-8 grid max-w-6xl gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="rounded-xl border border-border bg-card p-5 shadow-sm animate-pulse">
+                <div className="h-5 bg-muted rounded w-1/2 mb-2"></div>
+                <div className="h-4 bg-muted rounded w-full"></div>
               </div>
-              <p className="mt-2 text-sm text-neutral-600">Handpicked tutors, live projects, and feedback built for this track.</p>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : categories.length > 0 ? (
+          <div className="mx-auto mt-8 grid max-w-6xl gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {categories.map((category) => (
+              <Link
+                key={category.id}
+                href={`/tutors?categoryId=${category.id}`}
+                className="rounded-xl border border-border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+              >
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-foreground">{category.name}</h3>
+                  <ArrowRight className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {category.subjects?.length || 0} {category.subjects?.length === 1 ? 'subject' : 'subjects'} available
+                </p>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="mx-auto mt-8 text-center py-12">
+            <p className="text-muted-foreground">No categories available at the moment.</p>
+          </div>
+        )}
       </section>
 
       {/* CTA */}
-      <section className="relative overflow-hidden border-t border-neutral-200 bg-neutral-950 text-white">
+      <section className="relative overflow-hidden border-t border-border bg-primary text-primary-foreground">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.08),transparent_35%),radial-gradient(circle_at_80%_30%,rgba(255,255,255,0.07),transparent_32%),radial-gradient(circle_at_40%_80%,rgba(255,255,255,0.06),transparent_30%)]" aria-hidden />
         <div className="container relative mx-auto px-4 py-16 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div className="max-w-xl space-y-3">
-            <p className="text-sm uppercase tracking-[0.2em] text-neutral-300">Get started</p>
+            <p className="text-sm uppercase tracking-[0.2em] text-primary-foreground/80">Get started</p>
             <h2 className="text-3xl font-semibold">Book your first session in minutes.</h2>
-            <p className="text-neutral-200">Create a profile, tell us your goal, and we will line up tutors with availability this week.</p>
+            <p className="text-primary-foreground/90">Create a profile, tell us your goal, and we will line up tutors with availability this week.</p>
           </div>
           <div className="flex gap-3">
-            <Link href="/register" className="rounded-lg bg-white px-5 py-3 font-semibold text-neutral-950 shadow-md shadow-white/10 transition hover:-translate-y-0.5">
+            <Link href="/register" className="rounded-lg bg-primary-foreground px-5 py-3 font-semibold text-primary shadow-md shadow-primary-foreground/10 transition hover:-translate-y-0.5">
               Create account
             </Link>
-            <Link href="/login" className="rounded-lg border border-white/30 px-5 py-3 font-semibold text-white transition hover:-translate-y-0.5 hover:border-white">
+            <Link href="/login" className="rounded-lg border border-primary-foreground/30 px-5 py-3 font-semibold text-primary-foreground transition hover:-translate-y-0.5 hover:border-primary-foreground">
               I already have an account
             </Link>
           </div>
@@ -234,9 +286,9 @@ export default function Home() {
 
 function FeatureCard({ title, copy }: { title: string; copy: string }) {
   return (
-    <div className="rounded-xl border border-neutral-200 bg-white/90 p-4 shadow-sm">
-      <h3 className="text-base font-semibold text-neutral-950">{title}</h3>
-      <p className="mt-2 text-sm text-neutral-600 leading-relaxed">{copy}</p>
+    <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
+      <h3 className="text-base font-semibold text-foreground">{title}</h3>
+      <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{copy}</p>
     </div>
   );
 }
