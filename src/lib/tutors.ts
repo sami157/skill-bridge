@@ -3,7 +3,7 @@
  */
 
 import { api } from './api';
-import type { TutorsResponse, CategoriesResponse, TutorsFilters, TutorProfile, Category } from './types';
+import type { TutorsResponse, CategoriesResponse, TutorsFilters, TutorProfile, TutorProfileDetail, Category, BookingRequest, BookingResponse, Booking } from './types';
 
 /**
  * Fetch tutors with optional filters
@@ -45,5 +45,23 @@ export async function fetchCategories(): Promise<CategoriesResponse> {
  * Fetch a single tutor by ID
  */
 export async function fetchTutorById(id: string) {
-  return api.get<TutorProfile>(`/tutors/${id}`);
+  const response = await api.get<TutorProfileDetail>(`/tutors/${id}`);
+  return {
+    success: response.success,
+    data: response.data,
+    message: response.message,
+  };
+}
+
+/**
+ * Create a booking
+ */
+export async function createBooking(booking: BookingRequest): Promise<BookingResponse> {
+  const response = await api.post<Booking>('/bookings', booking);
+  return {
+    success: response.success,
+    data: response.data,
+    message: response.message,
+    details: response.details,
+  };
 }

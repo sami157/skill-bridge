@@ -54,3 +54,44 @@ export interface TutorsFilters {
   sortBy?: 'rating_asc' | 'rating_desc' | 'price_asc' | 'price_desc';
   search?: string;
 }
+
+export interface Review {
+  id: string;
+  rating: number;
+  comment?: string;
+  createdAt?: string;
+}
+
+export interface BookingWithReview {
+  id: string;
+  review?: Review;
+}
+
+export interface TutorProfileDetail extends TutorProfile {
+  bookingsAsTutor?: BookingWithReview[];
+}
+
+export interface BookingRequest {
+  studentId: string;
+  tutorId: string;
+  startTime: string; // ISO 8601
+  endTime: string; // ISO 8601
+}
+
+export interface Booking {
+  id: string;
+  studentId: string;
+  tutorId: string;
+  startTime: string;
+  endTime: string;
+  status: 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BookingResponse {
+  success: boolean;
+  data?: Booking;
+  message?: string;
+  details?: unknown;
+}
