@@ -118,3 +118,18 @@ export interface ReviewRequest {
   rating: number;
   comment?: string;
 }
+
+export interface TutorProfileUpdate {
+  userId: string;
+  bio?: string;
+  subjectsIds?: string[];
+  availability?: Record<string, unknown>;
+  pricePerHour?: number;
+}
+
+export interface AvailabilitySlot {
+  id: string;
+  date: string; // YYYY-MM-DD
+  startTime: string; // HH:mm
+  endTime: string; // HH:mm
+}

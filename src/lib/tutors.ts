@@ -3,7 +3,7 @@
  */
 
 import { api } from './api';
-import type { TutorsResponse, CategoriesResponse, TutorsFilters, TutorProfile, TutorProfileDetail, Category, BookingRequest, BookingResponse, Booking, BookingsResponse, ReviewRequest, Review } from './types';
+import type { TutorsResponse, CategoriesResponse, TutorsFilters, TutorProfile, TutorProfileDetail, Category, BookingRequest, BookingResponse, Booking, BookingsResponse, ReviewRequest, Review, TutorProfileUpdate } from './types';
 
 /**
  * Fetch tutors with optional filters
@@ -105,5 +105,30 @@ export async function createReview(review: ReviewRequest): Promise<{ success: bo
     success: response.success,
     data: response.data,
     message: response.message,
+  };
+}
+
+/**
+ * Update tutor profile
+ */
+export async function updateTutorProfile(update: TutorProfileUpdate): Promise<{ success: boolean; data?: TutorProfile; message?: string }> {
+  const response = await api.post<TutorProfile>('/tutors/update', update);
+  return {
+    success: response.success,
+    data: response.data,
+    message: response.message,
+  };
+}
+
+/**
+ * Complete a booking (Tutor only)
+ */
+export async function completeBooking(bookingId: string): Promise<BookingResponse> {
+  const response = await api.patch<Booking>(`/bookings/${bookingId}/complete`);
+  return {
+    success: response.success,
+    data: response.data,
+    message: response.message,
+    details: response.details,
   };
 }
