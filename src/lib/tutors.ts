@@ -21,14 +21,24 @@ export async function fetchTutors(filters: TutorsFilters = {}): Promise<TutorsRe
   const queryString = params.toString();
   const endpoint = `/tutors${queryString ? `?${queryString}` : ''}`;
   
-  return api.get<TutorProfile[]>(endpoint);
+  const response = await api.get<TutorProfile[]>(endpoint);
+  return {
+    success: response.success,
+    data: response.data || [],
+    message: response.message,
+  };
 }
 
 /**
  * Fetch all categories with subjects
  */
 export async function fetchCategories(): Promise<CategoriesResponse> {
-  return api.get<Category[]>('/categories');
+  const response = await api.get<Category[]>('/categories');
+  return {
+    success: response.success,
+    data: response.data || [],
+    message: response.message,
+  };
 }
 
 /**

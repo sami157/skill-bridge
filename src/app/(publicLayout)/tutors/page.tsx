@@ -1,23 +1,25 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { fetchTutors, fetchCategories } from '@/lib/tutors';
 import type { TutorProfile, Category, TutorsFilters } from '@/lib/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Star, Search } from 'lucide-react';
+import { Star, Search, Loader2 } from 'lucide-react';
 
-export default function TutorsPage() {
+function TutorsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
   // State
-  const [tutors, setTutors] = useState<TutorProfile[]>([]);
+  const [allTutors, setAllTutors] = useState<TutorProfile[]>([]);
+  const [displayedTutors, setDisplayedTutors] = useState<TutorProfile[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [displayCount, setDisplayCount] = useState(12); // Show 12 tutors initially
   
   // Filters from URL
   const [filters, setFilters] = useState<TutorsFilters>({
@@ -80,7 +82,9 @@ export default function TutorsPage() {
       const response = await fetchTutors(filters);
       
       if (response.success && response.data) {
-        setTutors(response.data);
+        setAllTutors(response.data);
+        setDisplayedTutors(response.data.slice(0, displayCount));
+        setDisplayCount(12); // Reset display count when filters change
       } else {
         setError(response.message || 'Failed to load tutors');
       }
@@ -95,6 +99,15 @@ export default function TutorsPage() {
   useEffect(() => {
     loadTutors();
   }, [loadTutors]);
+
+  // Update displayed tutors when allTutors or displayCount changes
+  useEffect(() => {
+    setDisplayedTutors(allTutors.slice(0, displayCount));
+  }, [allTutors, displayCount]);
+
+  const handleLoadMore = () => {
+    setDisplayCount(prev => prev + 12);
+  };
 
   // Handle search with debounce
   useEffect(() => {
@@ -279,7 +292,7 @@ export default function TutorsPage() {
 
         {/* Main Content - Tutor Cards */}
         <main className="flex-1">
-          {loading && tutors.length === 0 ? (
+          {loading && allTutors.length === 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[...Array(6)].map((_, i) => (
                 <div key={i} className="border rounded-lg p-4 animate-pulse">
@@ -295,7 +308,7 @@ export default function TutorsPage() {
               <p className="text-destructive mb-4">{error}</p>
               <Button onClick={() => loadTutors()}>Try Again</Button>
             </div>
-          ) : tutors.length === 0 ? (
+          ) : displayedTutors.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-muted-foreground mb-4">No tutors found matching your criteria.</p>
               <Button variant="outline" onClick={clearFilters}>Clear Filters</Button>
@@ -303,7 +316,7 @@ export default function TutorsPage() {
           ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-                {tutors.map((tutor) => (
+                {displayedTutors.map((tutor) => (
                   <Link
                     key={tutor.id}
                     href={`/tutors/${tutor.id}`}
@@ -369,10 +382,36 @@ export default function TutorsPage() {
                 ))}
               </div>
 
+              {/* Load More Button - Client-side pagination */}
+              {allTutors.length > displayedTutors.length && (
+                <div className="text-center">
+                  <Button
+                    variant="outline"
+                    onClick={handleLoadMore}
+                  >
+                    Load More ({allTutors.length - displayedTutors.length} remaining)
+                  </Button>
+                </div>
+              )}
             </>
           )}
         </main>
       </div>
     </div>
+  );
+}
+
+export default function TutorsPage() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold mb-2">Find Tutors</h1>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    }>
+      <TutorsPageContent />
+    </Suspense>
   );
 }
