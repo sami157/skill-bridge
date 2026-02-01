@@ -1,6 +1,6 @@
 'use client';
 
-import { Navbar } from "@/components/navbar1";
+import { Navbar } from "@/components/Navbar";
 import { useAuth } from "@/hooks/useAuth";
 import { signOut } from "@/lib/auth";
 import { useRouter } from "next/navigation";

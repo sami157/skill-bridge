@@ -1,4 +1,6 @@
-import { ArrowRight, BookOpen, Clock3, Sparkles, Star, Users } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, Clock3, Sparkles, Users } from "lucide-react";
+import { Hero } from "@/components/Hero";
 
 const tutors = [
   {
@@ -57,48 +59,11 @@ const steps = [
 export default function Home() {
   return (
     <div className="bg-gradient-to-br from-neutral-100 via-white to-neutral-200 text-neutral-900">
-      {/* Hero */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(0,0,0,0.07),transparent_35%),radial-gradient(circle_at_80%_30%,rgba(0,0,0,0.06),transparent_32%),radial-gradient(circle_at_40%_80%,rgba(0,0,0,0.05),transparent_30%)]" aria-hidden />
-        <div className="container mx-auto px-4 py-20 lg:py-28 relative">
-          <div className="max-w-2xl space-y-6">
-            <div className="inline-flex items-center gap-2 rounded-full bg-neutral-900 text-white px-4 py-2 text-sm shadow-lg shadow-neutral-900/10">
-              <Sparkles className="h-4 w-4" />
-              <span>Find a tutor who moves at your speed</span>
-            </div>
-            <h1 className="text-4xl md:text-5xl font-semibold leading-tight tracking-tight text-neutral-950">
-              Level up with tutors who design paths around <span className="underline decoration-neutral-400">your goals</span>.
-            </h1>
-            <p className="text-lg text-neutral-600 max-w-xl">
-              Skill Bridge connects you with curated experts for focused 1:1 sessions, portfolio-ready projects, and interview prep in one place.
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <a
-                href="/tutors"
-                className="inline-flex items-center gap-2 rounded-lg bg-neutral-900 px-5 py-3 text-white shadow-md shadow-neutral-900/20 transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-neutral-900/25"
-              >
-                Browse tutors
-                <ArrowRight className="h-4 w-4" />
-              </a>
-              <a
-                href="/register"
-                className="inline-flex items-center gap-2 rounded-lg border border-neutral-800 px-5 py-3 text-neutral-900 bg-white/70 backdrop-blur transition hover:-translate-y-0.5 hover:border-neutral-900"
-              >
-                Join as student
-              </a>
-            </div>
-            <div className="flex gap-8 pt-4 text-sm text-neutral-600">
-              <span className="flex items-center gap-2"><Star className="h-4 w-4 text-amber-500" /> 4.9 average rating</span>
-              <span className="flex items-center gap-2"><Users className="h-4 w-4" /> 5k+ sessions booked</span>
-              <span className="flex items-center gap-2"><BookOpen className="h-4 w-4" /> Project-first learning</span>
-            </div>
-          </div>
-        </div>
-      </section>
+      <Hero />
 
       {/* About */}
       <section className="border-y border-neutral-200 bg-white/80 backdrop-blur">
-        <div className="container mx-auto px-4 py-16 grid gap-10 md:grid-cols-3 items-start">
+        <div className="mx-auto grid max-w-6xl items-start gap-10 px-4 py-16 md:grid-cols-3">
           <div className="md:col-span-2 space-y-4">
             <p className="text-sm uppercase tracking-[0.2em] text-neutral-500">About</p>
             <h2 className="text-3xl font-semibold text-neutral-950">Human tutors, crafted pathways.</h2>
@@ -136,7 +101,7 @@ export default function Home() {
 
       {/* How it works */}
       <section className="container mx-auto px-4 py-16">
-        <div className="flex items-start justify-between gap-6 flex-col md:flex-row md:items-center">
+        <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-6 md:flex-row md:items-center">
           <div>
             <p className="text-sm uppercase tracking-[0.2em] text-neutral-500">How it works</p>
             <h2 className="text-3xl font-semibold text-neutral-950">Book a tutor in three steps.</h2>
@@ -147,7 +112,7 @@ export default function Home() {
             <ArrowRight className="h-4 w-4" />
           </a>
         </div>
-        <div className="mt-10 grid gap-6 md:grid-cols-3">
+        <div className="mx-auto mt-10 grid max-w-6xl gap-6 md:grid-cols-3">
           {steps.map((step) => (
             <div
               key={step.title}
@@ -168,19 +133,19 @@ export default function Home() {
 
       {/* Tutors */}
       <section className="border-t border-b border-neutral-200 bg-white/90 backdrop-blur">
-        <div className="container mx-auto px-4 py-16">
-          <div className="flex items-center justify-between gap-4 flex-col md:flex-row md:items-end">
+        <div className="mx-auto max-w-6xl px-4 py-16">
+          <div className="flex flex-col items-center justify-between gap-4 md:flex-row md:items-end">
             <div>
               <p className="text-sm uppercase tracking-[0.2em] text-neutral-500">Featured tutors</p>
               <h2 className="text-3xl font-semibold text-neutral-950">Handpicked mentors ready this week.</h2>
             </div>
-            <a
+            <Link
               href="/tutors"
               className="inline-flex items-center gap-2 text-sm font-semibold text-neutral-900 underline decoration-neutral-400 underline-offset-4 hover:decoration-neutral-800"
             >
               See all tutors
               <ArrowRight className="h-4 w-4" />
-            </a>
+            </Link>
           </div>
           <div className="mt-10 grid gap-6 md:grid-cols-3">
             {tutors.map((tutor) => (
@@ -200,12 +165,12 @@ export default function Home() {
                 <p className="mt-4 text-sm text-neutral-700 leading-relaxed">{tutor.blurb}</p>
                 <div className="mt-5 flex items-center justify-between text-sm text-neutral-600">
                   <span className="flex items-center gap-2"><Users className="h-4 w-4" /> {tutor.students} students</span>
-                  <a
+                  <Link
                     href="/tutors"
                     className="inline-flex items-center gap-1 text-neutral-900 font-medium"
                   >
                     Book session <ArrowRight className="h-4 w-4" />
-                  </a>
+                  </Link>
                 </div>
               </article>
             ))}
@@ -215,20 +180,20 @@ export default function Home() {
 
       {/* Categories */}
       <section className="container mx-auto px-4 py-16">
-        <div className="flex items-center justify-between gap-4 flex-col md:flex-row md:items-end">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 md:flex-row md:items-end">
           <div>
             <p className="text-sm uppercase tracking-[0.2em] text-neutral-500">Categories</p>
             <h2 className="text-3xl font-semibold text-neutral-950">Choose a track to get started.</h2>
           </div>
-          <a
+          <Link
             href="/register"
             className="inline-flex items-center gap-2 text-sm font-semibold text-neutral-900 underline decoration-neutral-400 underline-offset-4 hover:decoration-neutral-800"
           >
             Start matching
             <ArrowRight className="h-4 w-4" />
-          </a>
+          </Link>
         </div>
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mx-auto mt-8 grid max-w-6xl gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {categories.map((category) => (
             <div
               key={category}
@@ -254,12 +219,12 @@ export default function Home() {
             <p className="text-neutral-200">Create a profile, tell us your goal, and we will line up tutors with availability this week.</p>
           </div>
           <div className="flex gap-3">
-            <a href="/register" className="rounded-lg bg-white px-5 py-3 font-semibold text-neutral-950 shadow-md shadow-white/10 transition hover:-translate-y-0.5">
+            <Link href="/register" className="rounded-lg bg-white px-5 py-3 font-semibold text-neutral-950 shadow-md shadow-white/10 transition hover:-translate-y-0.5">
               Create account
-            </a>
-            <a href="/login" className="rounded-lg border border-white/30 px-5 py-3 font-semibold text-white transition hover:-translate-y-0.5 hover:border-white">
+            </Link>
+            <Link href="/login" className="rounded-lg border border-white/30 px-5 py-3 font-semibold text-white transition hover:-translate-y-0.5 hover:border-white">
               I already have an account
-            </a>
+            </Link>
           </div>
         </div>
       </section>
