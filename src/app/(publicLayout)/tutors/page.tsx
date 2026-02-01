@@ -184,9 +184,9 @@ function TutorsPageContent() {
         </div>
       </div>
 
-      <div className="flex gap-6">
+      <div className="flex flex-col lg:flex-row gap-6">
         {/* Left Sidebar - Filters */}
-        <aside className="w-64 flex-shrink-0">
+        <aside className="w-full lg:w-64 flex-shrink-0">
           <div className="bg-muted/40 rounded-lg p-4 space-y-4">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold">Filters</h2>
@@ -315,7 +315,7 @@ function TutorsPageContent() {
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-6">
                 {displayedTutors.map((tutor) => (
                   <Link
                     key={tutor.id}

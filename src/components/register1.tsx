@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { signUp } from "@/lib/auth";
+import { showToast } from "@/lib/toast";
 
 interface Register1Props {
   heading?: string;
@@ -166,6 +167,7 @@ const Register1 = ({
 
       if (response.success && response.data?.user) {
         const user = response.data.user;
+        showToast.success(`Account created successfully! Welcome, ${user.name || user.email}!`);
         
         // Redirect based on role
         if (user.role === 'STUDENT') {
@@ -181,10 +183,14 @@ const Register1 = ({
         // Refresh the page to update auth state
         router.refresh();
       } else {
-        setError(response.message || 'Registration failed. Please try again.');
+        const errorMsg = response.message || 'Registration failed. Please try again.';
+        setError(errorMsg);
+        showToast.error(errorMsg);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
+      const errorMsg = err instanceof Error ? err.message : 'An unexpected error occurred';
+      setError(errorMsg);
+      showToast.error(errorMsg);
     } finally {
       setLoading(false);
     }

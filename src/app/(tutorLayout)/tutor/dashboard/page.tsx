@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import type { Booking, TutorProfileDetail } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Calendar, Clock, Star, TrendingUp, CheckCircle2, Loader2, User } from 'lucide-react';
+import { showToast } from '@/lib/toast';
 
 export default function TutorDashboardPage() {
   const { user } = useAuth();
@@ -59,12 +60,15 @@ export default function TutorDashboardPage() {
       const response = await completeBooking(bookingId);
       
       if (response.success) {
+        showToast.success('Session marked as completed!');
         await loadData();
       } else {
-        alert(response.message || 'Failed to complete booking');
+        const errorMsg = response.message || 'Failed to complete booking';
+        showToast.error(errorMsg);
       }
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'An error occurred');
+      const errorMsg = err instanceof Error ? err.message : 'An error occurred';
+      showToast.error(errorMsg);
     } finally {
       setCompletingId(null);
     }

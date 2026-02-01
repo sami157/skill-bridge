@@ -1,6 +1,7 @@
 'use client';
 
 import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
 import { useAuth } from "@/hooks/useAuth";
 import { signOut } from "@/lib/auth";
 import { useRouter } from "next/navigation";
@@ -24,7 +25,7 @@ export default function PublicLayout({
     };
 
     return (
-        <div>
+        <div className="flex min-h-screen flex-col">
             <Navbar
                 user={!loading && user ? {
                     name: user.name,
@@ -33,7 +34,10 @@ export default function PublicLayout({
                 } : undefined}
                 onLogout={handleLogout}
             />
-            {children}
+            <main className="flex-1">
+                {children}
+            </main>
+            <Footer />
         </div>
     );
 }

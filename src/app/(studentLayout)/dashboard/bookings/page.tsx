@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import type { Booking } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Star, Calendar, Clock, X, MessageSquare, Loader2, CheckCircle2 } from 'lucide-react';
+import { showToast } from '@/lib/toast';
 
 export default function StudentBookingsPage() {
   const { user } = useAuth();
@@ -51,13 +52,16 @@ export default function StudentBookingsPage() {
       const response = await cancelBooking(bookingId);
       
       if (response.success) {
+        showToast.success('Booking cancelled successfully');
         // Reload bookings to get updated status
         await loadBookings();
       } else {
-        alert(response.message || 'Failed to cancel booking');
+        const errorMsg = response.message || 'Failed to cancel booking';
+        showToast.error(errorMsg);
       }
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'An error occurred');
+      const errorMsg = err instanceof Error ? err.message : 'An error occurred';
+      showToast.error(errorMsg);
     } finally {
       setCancellingId(null);
     }
@@ -98,6 +102,7 @@ export default function StudentBookingsPage() {
       });
       
       if (response.success) {
+        showToast.success('Review submitted successfully!');
         setShowReviewForm(null);
         setReviewRating(5);
         setReviewComment('');

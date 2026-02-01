@@ -9,6 +9,7 @@ import type { TutorProfileDetail, BookingRequest } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Star, Calendar, Clock, CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import { showToast } from '@/lib/toast';
 
 function TutorDetailContent() {
   const params = useParams();
@@ -41,13 +42,17 @@ function TutorDetailContent() {
         setError(null);
         const response = await fetchTutorById(id);
         
-        if (response.success && response.data) {
-          setTutor(response.data);
-        } else {
-          setError(response.message || 'Tutor not found');
-        }
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load tutor');
+      if (response.success && response.data) {
+        setTutor(response.data);
+      } else {
+        const errorMsg = response.message || 'Tutor not found';
+        setError(errorMsg);
+        showToast.error(errorMsg);
+      }
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to load tutor';
+      setError(errorMsg);
+      showToast.error(errorMsg);
       } finally {
         setLoading(false);
       }
@@ -92,15 +97,20 @@ function TutorDetailContent() {
           start: startTime.toLocaleString(),
           end: endTime.toLocaleString(),
         });
+        showToast.success('Booking confirmed successfully!');
         // Reset form
         setSelectedDate('');
         setSelectedStartTime('');
         setSelectedEndTime('');
       } else {
-        setBookingError(response.message || 'Failed to create booking');
+        const errorMsg = response.message || 'Failed to create booking';
+        setBookingError(errorMsg);
+        showToast.error(errorMsg);
       }
     } catch (err) {
-      setBookingError(err instanceof Error ? err.message : 'An error occurred');
+      const errorMsg = err instanceof Error ? err.message : 'An error occurred';
+      setBookingError(errorMsg);
+      showToast.error(errorMsg);
     } finally {
       setBookingLoading(false);
     }
@@ -153,8 +163,8 @@ function TutorDetailContent() {
   }, {} as Record<string, typeof tutor.subjects>);
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div className="container mx-auto px-4 py-6 md:py-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
           {/* Tutor Header */}

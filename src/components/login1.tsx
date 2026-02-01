@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { signIn } from "@/lib/auth";
+import { showToast } from "@/lib/toast";
 
 interface Login1Props {
   heading?: string;
@@ -76,6 +77,7 @@ const Login1 = ({
 
       if (response.success && response.data?.user) {
         const user = response.data.user;
+        showToast.success(`Welcome back, ${user.name || user.email}!`);
         
         // Redirect based on role
         if (user.role === 'STUDENT') {
@@ -91,10 +93,14 @@ const Login1 = ({
         // Refresh the page to update auth state
         router.refresh();
       } else {
-        setError(response.message || 'Login failed. Please check your credentials.');
+        const errorMsg = response.message || 'Login failed. Please check your credentials.';
+        setError(errorMsg);
+        showToast.error(errorMsg);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An unexpected error occurred');
+      const errorMsg = err instanceof Error ? err.message : 'An unexpected error occurred';
+      setError(errorMsg);
+      showToast.error(errorMsg);
     } finally {
       setLoading(false);
     }

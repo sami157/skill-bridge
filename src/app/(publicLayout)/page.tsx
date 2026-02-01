@@ -47,6 +47,7 @@ export default function Home() {
         }
       } catch (err) {
         console.error('Failed to load homepage data:', err);
+        // Error will be handled silently on homepage to avoid disrupting UX
       } finally {
         setLoading(false);
       }
@@ -59,9 +60,9 @@ export default function Home() {
     <div className="bg-gradient-to-br from-neutral-100 via-white to-neutral-200 dark:from-neutral-950 dark:via-neutral-900 dark:to-neutral-800 text-foreground">
       <Hero />
 
-      {/* About */}
-      <section className="border-y border-border bg-card/80 backdrop-blur">
-        <div className="mx-auto grid max-w-6xl items-start gap-10 px-4 py-16 md:grid-cols-3">
+      {/* Section 1: About */}
+      <section id="about" className="border-y border-border bg-card/80 backdrop-blur">
+        <div className="mx-auto grid max-w-6xl items-start gap-10 px-4 py-12 md:py-16 md:grid-cols-3">
           <div className="md:col-span-2 space-y-4">
             <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">About</p>
             <h2 className="text-3xl font-semibold text-foreground">Human tutors, crafted pathways.</h2>
@@ -97,8 +98,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* How it works */}
-      <section className="container mx-auto px-4 py-16">
+      {/* Section 2: How it works */}
+      <section id="how-it-works" className="container mx-auto px-4 py-12 md:py-16">
         <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-6 md:flex-row md:items-center">
           <div>
             <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">How it works</p>
@@ -129,9 +130,9 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Tutors */}
-      <section className="border-t border-b border-border bg-card/90 backdrop-blur">
-        <div className="mx-auto max-w-6xl px-4 py-16">
+      {/* Section 3: Featured Tutors */}
+      <section id="featured-tutors" className="border-t border-b border-border bg-card/90 backdrop-blur">
+        <div className="mx-auto max-w-6xl px-4 py-12 md:py-16">
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row md:items-end">
             <div>
               <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">Featured tutors</p>
@@ -212,8 +213,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Categories */}
-      <section className="container mx-auto px-4 py-16">
+      {/* Section 4: Categories */}
+      <section id="categories" className="container mx-auto px-4 py-12 md:py-16">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 md:flex-row md:items-end">
           <div>
             <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">Categories</p>
@@ -261,20 +262,20 @@ export default function Home() {
         )}
       </section>
 
-      {/* CTA */}
-      <section className="relative overflow-hidden border-t border-border bg-primary text-primary-foreground">
+      {/* CTA Section */}
+      <section id="cta" className="relative overflow-hidden border-t border-border bg-primary text-primary-foreground">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.08),transparent_35%),radial-gradient(circle_at_80%_30%,rgba(255,255,255,0.07),transparent_32%),radial-gradient(circle_at_40%_80%,rgba(255,255,255,0.06),transparent_30%)]" aria-hidden />
-        <div className="container relative mx-auto px-4 py-16 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+        <div className="container relative mx-auto px-4 py-12 md:py-16 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div className="max-w-xl space-y-3">
             <p className="text-sm uppercase tracking-[0.2em] text-primary-foreground/80">Get started</p>
             <h2 className="text-3xl font-semibold">Book your first session in minutes.</h2>
             <p className="text-primary-foreground/90">Create a profile, tell us your goal, and we will line up tutors with availability this week.</p>
           </div>
-          <div className="flex gap-3">
-            <Link href="/register" className="rounded-lg bg-primary-foreground px-5 py-3 font-semibold text-primary shadow-md shadow-primary-foreground/10 transition hover:-translate-y-0.5">
+          <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+            <Link href="/register" className="rounded-lg bg-primary-foreground px-5 py-3 font-semibold text-primary shadow-md shadow-primary-foreground/10 transition hover:-translate-y-0.5 text-center">
               Create account
             </Link>
-            <Link href="/login" className="rounded-lg border border-primary-foreground/30 px-5 py-3 font-semibold text-primary-foreground transition hover:-translate-y-0.5 hover:border-primary-foreground">
+            <Link href="/login" className="rounded-lg border border-primary-foreground/30 px-5 py-3 font-semibold text-primary-foreground transition hover:-translate-y-0.5 hover:border-primary-foreground text-center">
               I already have an account
             </Link>
           </div>
