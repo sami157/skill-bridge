@@ -100,15 +100,6 @@ class ApiClient {
     this.baseURL = baseURL;
   }
 
-  private getToken(): string | null {
-    if (typeof window === 'undefined') return null;
-    try {
-      return localStorage.getItem('sb_auth_token');
-    } catch {
-      return null;
-    }
-  }
-
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
@@ -118,12 +109,9 @@ class ApiClient {
     // All routes use NEXT_PUBLIC_API_URL as base URL
     const url = buildUrl(this.baseURL, endpoint);
 
-    const token = this.getToken();
-    
     const defaultHeaders: HeadersInit = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };
 
     // Include credentials (cookies) for Better Auth

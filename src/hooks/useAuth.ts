@@ -16,16 +16,8 @@ export interface UseAuthReturn {
  * Calls /users/profile endpoint to check auth status
  */
 export function useAuth(): UseAuthReturn {
-  const [user, setUser] = useState<User | null>(() => {
-    if (typeof window === 'undefined') return null;
-    try {
-      const cached = localStorage.getItem('sb_auth_user');
-      return cached ? (JSON.parse(cached) as User) : null;
-    } catch {
-      return null;
-    }
-  });
-  const [role, setRole] = useState<Role | null>(() => user?.role ?? null);
+  const [user, setUser] = useState<User | null>(null);
+  const [role, setRole] = useState<Role | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,24 +29,14 @@ export function useAuth(): UseAuthReturn {
       if (result.user) {
         setUser(result.user);
         setRole(result.role);
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('sb_auth_user', JSON.stringify(result.user));
-        }
       } else {
-        // If no user returned but a token exists, keep cached user to avoid UI flicker
-        const tokenPresent = typeof window !== 'undefined' && !!localStorage.getItem('sb_auth_token');
-        if (!tokenPresent) {
-          setUser(null);
-          setRole(null);
-        }
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to fetch user');
-      const tokenPresent = typeof window !== 'undefined' && !!localStorage.getItem('sb_auth_token');
-      if (!tokenPresent) {
         setUser(null);
         setRole(null);
       }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch user');
+      setUser(null);
+      setRole(null);
     } finally {
       setLoading(false);
     }
@@ -67,7 +49,7 @@ export function useAuth(): UseAuthReturn {
   // React to token changes (login/logout) across tabs and same tab
   useEffect(() => {
     const handleStorage = (e: StorageEvent) => {
-      if (e.key === 'sb_auth_token' || e.key === 'sb_auth_user') {
+      if (e.key === 'sb_auth_user') {
         fetchUser();
       }
     };

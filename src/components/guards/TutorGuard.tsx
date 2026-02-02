@@ -17,30 +17,21 @@ export function TutorGuard({ children }: TutorGuardProps) {
   const { user, role, loading } = useAuth();
   const router = useRouter();
   const normalizedRole = (role ?? user?.role)?.toUpperCase();
-  const hasToken = typeof window !== 'undefined' ? !!localStorage.getItem('sb_auth_token') : false;
 
   useEffect(() => {
     if (!loading) {
-      if (!user && !hasToken) {
+      if (!user) {
         router.push('/login');
         return;
       }
-      if (normalizedRole !== 'TUTOR' && (!hasToken || user)) {
+      if (normalizedRole !== 'TUTOR') {
         router.push('/');
         return;
       }
     }
-  }, [user, normalizedRole, loading, hasToken, router]);
+  }, [user, normalizedRole, loading, router]);
 
   if (loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-lg">Loading...</div>
-      </div>
-    );
-  }
-
-  if (hasToken && (!user || !normalizedRole)) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-lg">Loading...</div>

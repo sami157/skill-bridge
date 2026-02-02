@@ -35,13 +35,11 @@ export async function signIn(email: string, password: string) {
     password,
   });
 
-  // Normalize response
-  const token = (res as { token?: string; data?: { token?: string } }).token ?? res.data?.token;
   const user = (res as { user?: User; data?: { user?: User } }).user ?? res.data?.user;
-  const success = !!token && !!user;
+  const success = !!user || res.success === true;
   const message = res.message || (success ? undefined : 'Login failed');
 
-  return { success, token, user, message };
+  return { success, user, message };
 }
 
 /**
@@ -63,12 +61,11 @@ export async function signUp(data: {
     role: data.role || 'STUDENT',
   });
 
-  const token = (res as { token?: string; data?: { token?: string } }).token ?? res.data?.token;
   const user = (res as { user?: User; data?: { user?: User } }).user ?? res.data?.user;
-  const success = !!token && !!user;
+  const success = !!user || res.success === true;
   const message = res.message || (success ? undefined : 'Registration failed');
 
-  return { success, token, user, message };
+  return { success, user, message };
 }
 
 /**
@@ -77,9 +74,7 @@ export async function signUp(data: {
 export async function signOut() {
   try {
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('sb_auth_token');
       localStorage.removeItem('sb_auth_user');
-      window.dispatchEvent(new Event('sb-auth-updated'));
     }
   } catch {
     // ignore

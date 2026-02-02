@@ -77,20 +77,16 @@ const Login1 = ({
     try {
       const response = await signIn(email, password);
       const user = response.user as { name?: string; email?: string; role?: string } | null;
-      const token = response.token as string | undefined;
       const success = response.success;
 
-      if (success && user && token) {
-        // Temporary token storage; prefer HttpOnly cookie when backend supports it
-        if (typeof token === 'string') {
-          try {
-            localStorage.setItem('sb_auth_token', token);
-            localStorage.setItem('sb_auth_user', JSON.stringify(user));
-            window.dispatchEvent(new Event('sb-auth-updated'));
-          } catch {
-            // ignore storage errors
-          }
+      if (success && user) {
+        // Cache user locally for quick navbar render; session cookie is set by backend
+        try {
+          localStorage.setItem('sb_auth_user', JSON.stringify(user));
+        } catch {
+          // ignore
         }
+        window.dispatchEvent(new Event('sb-auth-updated'));
 
         showToast.success(`Welcome back, ${user.name || user.email}!`);
 

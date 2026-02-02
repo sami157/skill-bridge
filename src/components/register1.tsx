@@ -169,19 +169,15 @@ const Register1 = ({
       });
 
       const user = response.user as { name?: string; email?: string; role?: string } | null;
-      const token = response.token as string | undefined;
       const success = response.success;
 
-      if (success && user && token) {
-        if (typeof token === 'string') {
-          try {
-            localStorage.setItem('sb_auth_token', token);
-            localStorage.setItem('sb_auth_user', JSON.stringify(user));
-            window.dispatchEvent(new Event('sb-auth-updated'));
-          } catch {
-            // ignore storage errors
-          }
+      if (success && user) {
+        try {
+          localStorage.setItem('sb_auth_user', JSON.stringify(user));
+        } catch {
+          // ignore storage errors
         }
+        window.dispatchEvent(new Event('sb-auth-updated'));
 
         showToast.success(`Account created successfully! Welcome, ${user.name || user.email}!`);
         
