@@ -82,6 +82,7 @@ function TutorDetailContent() {
         return;
       }
 
+      // Schema: Booking.tutorId = TutorProfile.id. tutor from GET /tutors/:id is TutorProfile, so tutor.id is correct.
       const booking: BookingRequest = {
         studentId: user.id,
         tutorId: tutor.id,
