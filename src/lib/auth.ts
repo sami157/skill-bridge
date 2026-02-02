@@ -30,14 +30,14 @@ export interface AuthResponse {
  * Treat presence of { token, user } as success even if backend does not return a `success` flag.
  */
 export async function signIn(email: string, password: string) {
-  const res = await api.post<any>('/api/auth/sign-in/email', {
+  const res = await api.post<Record<string, unknown>>('/api/auth/sign-in/email', {
     email,
     password,
   });
 
   // Normalize response
-  const token = (res as any).token ?? res.data?.token;
-  const user = (res as any).user ?? res.data?.user;
+  const token = (res as { token?: string; data?: { token?: string } }).token ?? res.data?.token;
+  const user = (res as { user?: User; data?: { user?: User } }).user ?? res.data?.user;
   const success = !!token && !!user;
   const message = res.message || (success ? undefined : 'Login failed');
 
@@ -55,7 +55,7 @@ export async function signUp(data: {
   image?: string;
   role?: 'STUDENT' | 'TUTOR';
 }) {
-  const res = await api.post<any>('/api/auth/sign-up/email', {
+  const res = await api.post<Record<string, unknown>>('/api/auth/sign-up/email', {
     name: data.name,
     email: data.email,
     password: data.password,
@@ -63,8 +63,8 @@ export async function signUp(data: {
     role: data.role || 'STUDENT',
   });
 
-  const token = (res as any).token ?? res.data?.token;
-  const user = (res as any).user ?? res.data?.user;
+  const token = (res as { token?: string; data?: { token?: string } }).token ?? res.data?.token;
+  const user = (res as { user?: User; data?: { user?: User } }).user ?? res.data?.user;
   const success = !!token && !!user;
   const message = res.message || (success ? undefined : 'Registration failed');
 
@@ -91,13 +91,16 @@ export async function signOut() {
  */
 export async function getCurrentUser(): Promise<{ user: User | null; role: Role | null }> {
   const response = await api.get<User>('/users/profile');
-  
-  if (response.success && response.data) {
+
+  // Backend might not include a `success` flag; prefer data presence.
+  const user = (response as { user?: User; data?: User }).user ?? response.data ?? null;
+
+  if (user) {
     return {
-      user: response.data,
-      role: response.data.role,
+      user,
+      role: (user as User).role,
     };
   }
-  
+
   return { user: null, role: null };
 }
