@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { signIn } from "@/lib/auth";
 import { showToast } from "@/lib/toast";
+import { Eye, EyeOff } from "lucide-react";
 
 interface Login1Props {
   heading?: string;
@@ -31,6 +32,7 @@ const Login1 = ({
   const [error, setError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -136,19 +138,29 @@ const Login1 = ({
             </div>
 
             <div className="w-full">
-              <Input
-                type="password"
-                placeholder="Password"
-                className={cn("text-sm", passwordError && "border-destructive")}
-                value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  setPasswordError(null);
-                }}
-                onBlur={() => validatePassword(password)}
-                disabled={loading}
-                required
-              />
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Password"
+                  className={cn("text-sm pr-10", passwordError && "border-destructive")}
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    setPasswordError(null);
+                  }}
+                  onBlur={() => validatePassword(password)}
+                  disabled={loading}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground transition hover:text-foreground"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
               {passwordError && (
                 <p className="mt-1 text-xs text-destructive">{passwordError}</p>
               )}

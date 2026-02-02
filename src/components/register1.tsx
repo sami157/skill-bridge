@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { signUp } from "@/lib/auth";
 import { showToast } from "@/lib/toast";
+import { Eye, EyeOff } from "lucide-react";
 
 interface Register1Props {
   heading?: string;
@@ -36,6 +37,8 @@ const Register1 = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string | null>>({});
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const validateField = (field: string, value: string): string | null => {
     switch (field) {
@@ -274,32 +277,52 @@ const Register1 = ({
             </div>
 
             <div className="w-full">
-              <Input
-                type="password"
-                placeholder="Password"
-                className={cn("text-sm", fieldErrors.password && "border-destructive")}
-                value={password}
-                onChange={(e) => handleFieldChange('password', e.target.value)}
-                onBlur={(e) => handleBlur('password', e.target.value)}
-                disabled={loading}
-                required
-              />
+              <div className="relative">
+                <Input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Password"
+                  className={cn("text-sm pr-10", fieldErrors.password && "border-destructive")}
+                  value={password}
+                  onChange={(e) => handleFieldChange('password', e.target.value)}
+                  onBlur={(e) => handleBlur('password', e.target.value)}
+                  disabled={loading}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground transition hover:text-foreground"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
               {fieldErrors.password && (
                 <p className="mt-1 text-xs text-destructive">{fieldErrors.password}</p>
               )}
             </div>
 
             <div className="w-full">
-              <Input
-                type="password"
-                placeholder="Confirm Password"
-                className={cn("text-sm", fieldErrors.confirmPassword && "border-destructive")}
-                value={confirmPassword}
-                onChange={(e) => handleFieldChange('confirmPassword', e.target.value)}
-                onBlur={(e) => handleBlur('confirmPassword', e.target.value)}
-                disabled={loading}
-                required
-              />
+              <div className="relative">
+                <Input
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="Confirm Password"
+                  className={cn("text-sm pr-10", fieldErrors.confirmPassword && "border-destructive")}
+                  value={confirmPassword}
+                  onChange={(e) => handleFieldChange('confirmPassword', e.target.value)}
+                  onBlur={(e) => handleBlur('confirmPassword', e.target.value)}
+                  disabled={loading}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword((v) => !v)}
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground transition hover:text-foreground"
+                  aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                >
+                  {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
               {fieldErrors.confirmPassword && (
                 <p className="mt-1 text-xs text-destructive">{fieldErrors.confirmPassword}</p>
               )}
