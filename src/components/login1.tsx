@@ -76,12 +76,8 @@ const Login1 = ({
 
     try {
       const response = await signIn(email, password);
-      // Log raw response for debugging inconsistencies
-      // eslint-disable-next-line no-console
-      console.log("Login response", response);
-
-      const user = response.user;
-      const token = response.token;
+      const user = response.user as { name?: string; email?: string; role?: string } | null;
+      const token = response.token as string | undefined;
       const success = response.success;
 
       if (success && user && token) {
