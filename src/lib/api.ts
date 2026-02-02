@@ -122,6 +122,7 @@ class ApiClient {
     
     const defaultHeaders: HeadersInit = {
       'Content-Type': 'application/json',
+      'Accept': 'application/json',
     };
 
     // Include credentials (cookies) for Better Auth
@@ -132,6 +133,7 @@ class ApiClient {
         ...options.headers,
       },
       credentials: 'include', // Important for cookie-based auth
+      mode: 'cors', // Explicitly set CORS mode
     };
 
     try {
@@ -139,16 +141,28 @@ class ApiClient {
       
       if (!response.ok) {
         let errorData;
+        let errorText = '';
         try {
-          errorData = await response.json();
+          errorText = await response.text();
+          errorData = errorText ? JSON.parse(errorText) : {};
         } catch {
-          errorData = { message: `HTTP error! status: ${response.status}` };
+          errorData = { message: `HTTP error! status: ${response.status}`, raw: errorText };
+        }
+        
+        // Log CORS/403 errors for debugging
+        if (response.status === 403) {
+          console.error('403 Forbidden - Possible CORS issue:', {
+            url,
+            status: response.status,
+            headers: Object.fromEntries(response.headers.entries()),
+            errorData,
+          });
         }
         
         return {
           success: false,
           message: errorData.message || `HTTP error! status: ${response.status}`,
-          details: errorData.details,
+          details: { ...errorData.details, status: response.status, raw: errorText },
         };
       }
 
