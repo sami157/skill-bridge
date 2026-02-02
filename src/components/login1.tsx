@@ -75,9 +75,19 @@ const Login1 = ({
     setLoading(true);
 
     try {
+      const verifyRes = await fetch("/api/proxy/api/auth/verify-credentials", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), password }),
+      });
+      const data = await verifyRes.json();
+      if (!data?.success || !data?.token) {
+        setError(typeof data?.message === "string" ? data.message : "Invalid email or password");
+        showToast.error(typeof data?.message === "string" ? data.message : "Invalid email or password");
+        return;
+      }
       const result = await signIn("credentials", {
-        email: email.trim(),
-        password,
+        token: data.token,
         redirect: false,
       });
 

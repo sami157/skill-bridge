@@ -1,41 +1,35 @@
 import NextAuth, { type NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-
-const backendVerifyUrl =
-  process.env.BACKEND_VERIFY_URL ??
-  "https://skill-bridge-server-eight.vercel.app/api/auth/verify-credentials";
+import { jwtVerify } from "jose";
 
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
+        token: { label: "Token", type: "text" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
-        const res = await fetch(backendVerifyUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: credentials.email,
-            password: credentials.password,
-          }),
-        });
-        const data = await res.json();
-        if (!data?.success || !data?.user) {
-          throw new Error(
-            typeof data?.message === "string" ? data.message : "Invalid email or password"
+        const token = credentials?.token;
+        if (!token || typeof token !== "string") return null;
+        const secret = process.env.NEXTAUTH_SECRET;
+        if (!secret) return null;
+        try {
+          const { payload } = await jwtVerify(
+            token,
+            new TextEncoder().encode(secret)
           );
+          const sub = payload.sub;
+          if (!sub) return null;
+          return {
+            id: sub,
+            name: (payload.name as string) ?? "",
+            email: (payload.email as string) ?? "",
+            role: (payload.role as string) ?? "STUDENT",
+            image: (payload.image as string) ?? undefined,
+          };
+        } catch {
+          return null;
         }
-        const u = data.user;
-        return {
-          id: u.id,
-          name: u.name,
-          email: u.email,
-          role: u.role ?? "STUDENT",
-          image: u.image ?? undefined,
-        };
       },
     }),
   ],

@@ -168,11 +168,16 @@ const Register1 = ({
       });
 
       if (response.success) {
-        const signInResult = await signIn('credentials', {
-          email: email.trim(),
-          password,
-          redirect: false,
+        const verifyRes = await fetch("/api/proxy/api/auth/verify-credentials", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: email.trim(), password }),
         });
+        const verifyData = await verifyRes.json();
+        const token = verifyData?.success ? verifyData.token : null;
+        const signInResult = token
+          ? await signIn("credentials", { token, redirect: false })
+          : { ok: false };
 
         if (signInResult?.ok && signInResult?.error === undefined) {
           showToast.success(`Account created successfully! Welcome, ${name.trim()}!`);
