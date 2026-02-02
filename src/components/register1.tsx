@@ -176,10 +176,12 @@ const Register1 = ({
       const success = response.success;
 
       if (success && user && token) {
-        try {
-          localStorage.setItem('sb_auth_token', token);
-        } catch {
-          // ignore storage errors
+        if (typeof token === 'string') {
+          try {
+            localStorage.setItem('sb_auth_token', token);
+          } catch {
+            // ignore storage errors
+          }
         }
 
         showToast.success(`Account created successfully! Welcome, ${user.name || user.email}!`);

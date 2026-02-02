@@ -86,10 +86,12 @@ const Login1 = ({
 
       if (success && user && token) {
         // Temporary token storage; prefer HttpOnly cookie when backend supports it
-        try {
-          localStorage.setItem('sb_auth_token', token);
-        } catch {
-          // ignore storage errors
+        if (typeof token === 'string') {
+          try {
+            localStorage.setItem('sb_auth_token', token);
+          } catch {
+            // ignore storage errors
+          }
         }
 
         showToast.success(`Welcome back, ${user.name || user.email}!`);
