@@ -8,6 +8,218 @@ import { Button } from '@/components/ui/button';
 import { Star, Calendar, Clock, X, MessageSquare, Loader2, CheckCircle2 } from 'lucide-react';
 import { showToast } from '@/lib/toast';
 
+function getStatusColor(status: Booking['status']) {
+  switch (status) {
+    case 'CONFIRMED':
+      return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+    case 'COMPLETED':
+      return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+    case 'CANCELLED':
+      return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+    default:
+      return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+  }
+}
+
+type BookingCardProps = {
+  booking: Booking;
+  formatDate: (s: string) => string;
+  formatTime: (s: string) => string;
+  calculatePrice: (b: Booking) => number;
+  reviewComment: string;
+  setReviewComment: (v: string) => void;
+  reviewRating: number;
+  setReviewRating: (v: number) => void;
+  setReviewError: (v: string | null) => void;
+  reviewError: string | null;
+  showReviewForm: string | null;
+  setShowReviewForm: (v: string | null) => void;
+  reviewingId: string | null;
+  cancellingId: string | null;
+  onCancel: (id: string) => void;
+  onSubmitReview: (id: string) => void;
+};
+
+function BookingCard({
+  booking,
+  formatDate,
+  formatTime,
+  calculatePrice,
+  reviewComment,
+  setReviewComment,
+  reviewRating,
+  setReviewRating,
+  setReviewError,
+  reviewError,
+  showReviewForm,
+  setShowReviewForm,
+  reviewingId,
+  cancellingId,
+  onCancel,
+  onSubmitReview,
+}: BookingCardProps) {
+  return (
+    <div className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex-1">
+          <div className="flex items-center gap-3 mb-2">
+            {booking.tutor?.user.image ? (
+              <img
+                src={booking.tutor.user.image}
+                alt={booking.tutor.user.name}
+                className="w-12 h-12 rounded-full object-cover"
+              />
+            ) : (
+              <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                <span className="text-lg font-semibold">
+                  {booking.tutor?.user.name.charAt(0).toUpperCase() || 'T'}
+                </span>
+              </div>
+            )}
+            <div>
+              <h3 className="font-semibold">{booking.tutor?.user.name || 'Tutor'}</h3>
+              {booking.tutor && (
+                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                  <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                  <span>{booking.tutor.rating.toFixed(1)}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(booking.status)}`}>
+          {booking.status}
+        </span>
+      </div>
+      <div className="space-y-2 mb-3">
+        <div className="flex items-center gap-2 text-sm">
+          <Calendar className="h-4 w-4 text-muted-foreground" />
+          <span>{formatDate(booking.startTime)}</span>
+        </div>
+        <div className="flex items-center gap-2 text-sm">
+          <Clock className="h-4 w-4 text-muted-foreground" />
+          <span>
+            {formatTime(booking.startTime)} - {formatTime(booking.endTime)}
+          </span>
+        </div>
+        <div className="text-sm font-semibold">
+          Total: ${calculatePrice(booking).toFixed(2)}
+        </div>
+      </div>
+      {booking.review && (
+        <div className="mb-3 p-3 bg-muted rounded-md">
+          <div className="flex items-center gap-1 mb-1">
+            {[...Array(5)].map((_, i) => (
+              <Star
+                key={i}
+                className={`h-3 w-3 ${
+                  i < booking.review!.rating ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'
+                }`}
+              />
+            ))}
+          </div>
+          {booking.review.comment && (
+            <p className="text-sm text-muted-foreground">{booking.review.comment}</p>
+          )}
+        </div>
+      )}
+      <div className="flex gap-2">
+        {booking.status === 'CONFIRMED' && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onCancel(booking.id)}
+            disabled={cancellingId === booking.id}
+          >
+            {cancellingId === booking.id ? (
+              <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Cancelling...</>
+            ) : (
+              <><X className="mr-2 h-4 w-4" />Cancel</>
+            )}
+          </Button>
+        )}
+        {booking.status === 'COMPLETED' && !booking.review && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setShowReviewForm(showReviewForm === booking.id ? null : booking.id);
+              setReviewError(null);
+              setReviewRating(5);
+              setReviewComment('');
+            }}
+          >
+            <MessageSquare className="mr-2 h-4 w-4" />Leave Review
+          </Button>
+        )}
+      </div>
+      {showReviewForm === booking.id && booking.status === 'COMPLETED' && !booking.review && (
+        <div className="mt-4 p-4 border rounded-lg bg-muted/50">
+          <h4 className="font-medium mb-3">Write a Review</h4>
+          {reviewError && (
+            <div className="mb-3 p-3 bg-destructive/10 border border-destructive/20 rounded-md">
+              <p className="text-sm text-destructive">{reviewError}</p>
+            </div>
+          )}
+          <div className="space-y-3">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Rating <span className="text-destructive">*</span></label>
+              <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map((rating) => (
+                  <button
+                    key={rating}
+                    type="button"
+                    onClick={() => { setReviewRating(rating); setReviewError(null); }}
+                    className="focus:outline-none transition-transform hover:scale-110"
+                    disabled={reviewingId === booking.id}
+                  >
+                    <Star
+                      className={`h-6 w-6 ${rating <= reviewRating ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`}
+                    />
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Select a rating from 1 to 5 stars</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium mb-2 block">Comment (optional)</label>
+              <textarea
+                value={reviewComment}
+                onChange={(e) => { setReviewComment(e.target.value); setReviewError(null); }}
+                placeholder="Share your experience..."
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[80px]"
+                rows={3}
+                disabled={reviewingId === booking.id}
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                onClick={() => onSubmitReview(booking.id)}
+                disabled={reviewingId === booking.id || !reviewRating}
+              >
+                {reviewingId === booking.id ? (
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</>
+                ) : (
+                  <><CheckCircle2 className="mr-2 h-4 w-4" />Submit Review</>
+                )}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => { setShowReviewForm(null); setReviewRating(5); setReviewComment(''); setReviewError(null); }}
+                disabled={reviewingId === booking.id}
+              >
+                Cancel
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function StudentBookingsPage() {
   const { user } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -171,222 +383,6 @@ export default function StudentBookingsPage() {
     return hours * booking.tutor.pricePerHour;
   };
 
-  const getStatusColor = (status: Booking['status']) => {
-    switch (status) {
-      case 'CONFIRMED':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
-      case 'COMPLETED':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-      case 'CANCELLED':
-        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
-      default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
-    }
-  };
-
-  const BookingCard = ({ booking }: { booking: Booking }) => (
-    <div className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-      <div className="flex items-start justify-between mb-3">
-        <div className="flex-1">
-          <div className="flex items-center gap-3 mb-2">
-            {booking.tutor?.user.image ? (
-              <img
-                src={booking.tutor.user.image}
-                alt={booking.tutor.user.name}
-                className="w-12 h-12 rounded-full object-cover"
-              />
-            ) : (
-              <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
-                <span className="text-lg font-semibold">
-                  {booking.tutor?.user.name.charAt(0).toUpperCase() || 'T'}
-                </span>
-              </div>
-            )}
-            <div>
-              <h3 className="font-semibold">{booking.tutor?.user.name || 'Tutor'}</h3>
-              {booking.tutor && (
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                  <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                  <span>{booking.tutor.rating.toFixed(1)}</span>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-        <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(booking.status)}`}>
-          {booking.status}
-        </span>
-      </div>
-
-      <div className="space-y-2 mb-3">
-        <div className="flex items-center gap-2 text-sm">
-          <Calendar className="h-4 w-4 text-muted-foreground" />
-          <span>{formatDate(booking.startTime)}</span>
-        </div>
-        <div className="flex items-center gap-2 text-sm">
-          <Clock className="h-4 w-4 text-muted-foreground" />
-          <span>
-            {formatTime(booking.startTime)} - {formatTime(booking.endTime)}
-          </span>
-        </div>
-        <div className="text-sm font-semibold">
-          Total: ${calculatePrice(booking).toFixed(2)}
-        </div>
-      </div>
-
-      {/* Review Display */}
-      {booking.review && (
-        <div className="mb-3 p-3 bg-muted rounded-md">
-          <div className="flex items-center gap-1 mb-1">
-            {[...Array(5)].map((_, i) => (
-              <Star
-                key={i}
-                className={`h-3 w-3 ${
-                  i < booking.review!.rating
-                    ? 'fill-yellow-400 text-yellow-400'
-                    : 'text-muted-foreground'
-                }`}
-              />
-            ))}
-          </div>
-          {booking.review.comment && (
-            <p className="text-sm text-muted-foreground">{booking.review.comment}</p>
-          )}
-        </div>
-      )}
-
-      {/* Actions */}
-      <div className="flex gap-2">
-        {booking.status === 'CONFIRMED' && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleCancel(booking.id)}
-            disabled={cancellingId === booking.id}
-          >
-            {cancellingId === booking.id ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Cancelling...
-              </>
-            ) : (
-              <>
-                <X className="mr-2 h-4 w-4" />
-                Cancel
-              </>
-            )}
-          </Button>
-        )}
-        {booking.status === 'COMPLETED' && !booking.review && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              setShowReviewForm(showReviewForm === booking.id ? null : booking.id);
-              setReviewError(null);
-              setReviewRating(5);
-              setReviewComment('');
-            }}
-          >
-            <MessageSquare className="mr-2 h-4 w-4" />
-            Leave Review
-          </Button>
-        )}
-      </div>
-
-      {/* Review Form */}
-      {showReviewForm === booking.id && booking.status === 'COMPLETED' && !booking.review && (
-        <div className="mt-4 p-4 border rounded-lg bg-muted/50">
-          <h4 className="font-medium mb-3">Write a Review</h4>
-          
-          {/* Error Message */}
-          {reviewError && (
-            <div className="mb-3 p-3 bg-destructive/10 border border-destructive/20 rounded-md">
-              <p className="text-sm text-destructive">{reviewError}</p>
-            </div>
-          )}
-
-          <div className="space-y-3">
-            <div>
-              <label className="text-sm font-medium mb-2 block">
-                Rating <span className="text-destructive">*</span>
-              </label>
-              <div className="flex gap-1">
-                {[1, 2, 3, 4, 5].map((rating) => (
-                  <button
-                    key={rating}
-                    type="button"
-                    onClick={() => {
-                      setReviewRating(rating);
-                      setReviewError(null);
-                    }}
-                    className="focus:outline-none transition-transform hover:scale-110"
-                    disabled={reviewingId === booking.id}
-                  >
-                    <Star
-                      className={`h-6 w-6 ${
-                        rating <= reviewRating
-                          ? 'fill-yellow-400 text-yellow-400'
-                          : 'text-muted-foreground'
-                      }`}
-                    />
-                  </button>
-                ))}
-              </div>
-              <p className="text-xs text-muted-foreground mt-1">Select a rating from 1 to 5 stars</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium mb-2 block">Comment (optional)</label>
-              <textarea
-                value={reviewComment}
-                onChange={(e) => {
-                  setReviewComment(e.target.value);
-                  setReviewError(null);
-                }}
-                placeholder="Share your experience..."
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm min-h-[80px]"
-                rows={3}
-                disabled={reviewingId === booking.id}
-              />
-            </div>
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                onClick={() => handleSubmitReview(booking.id)}
-                disabled={reviewingId === booking.id || !reviewRating}
-              >
-                {reviewingId === booking.id ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Submitting...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="mr-2 h-4 w-4" />
-                    Submit Review
-                  </>
-                )}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setShowReviewForm(null);
-                  setReviewRating(5);
-                  setReviewComment('');
-                  setReviewError(null);
-                }}
-                disabled={reviewingId === booking.id}
-              >
-                Cancel
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
@@ -425,7 +421,25 @@ export default function StudentBookingsPage() {
           <h2 className="text-xl font-semibold mb-4">Upcoming</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {upcoming.map((booking) => (
-              <BookingCard key={booking.id} booking={booking} />
+              <BookingCard
+                key={booking.id}
+                booking={booking}
+                formatDate={formatDate}
+                formatTime={formatTime}
+                calculatePrice={calculatePrice}
+                reviewComment={reviewComment}
+                setReviewComment={setReviewComment}
+                reviewRating={reviewRating}
+                setReviewRating={setReviewRating}
+                reviewError={reviewError}
+                setReviewError={setReviewError}
+                showReviewForm={showReviewForm}
+                setShowReviewForm={setShowReviewForm}
+                reviewingId={reviewingId}
+                cancellingId={cancellingId}
+                onCancel={handleCancel}
+                onSubmitReview={handleSubmitReview}
+              />
             ))}
           </div>
         </div>
@@ -437,7 +451,25 @@ export default function StudentBookingsPage() {
           <h2 className="text-xl font-semibold mb-4">Past</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {past.map((booking) => (
-              <BookingCard key={booking.id} booking={booking} />
+              <BookingCard
+                key={booking.id}
+                booking={booking}
+                formatDate={formatDate}
+                formatTime={formatTime}
+                calculatePrice={calculatePrice}
+                reviewComment={reviewComment}
+                setReviewComment={setReviewComment}
+                reviewRating={reviewRating}
+                setReviewRating={setReviewRating}
+                reviewError={reviewError}
+                setReviewError={setReviewError}
+                showReviewForm={showReviewForm}
+                setShowReviewForm={setShowReviewForm}
+                reviewingId={reviewingId}
+                cancellingId={cancellingId}
+                onCancel={handleCancel}
+                onSubmitReview={handleSubmitReview}
+              />
             ))}
           </div>
         </div>
