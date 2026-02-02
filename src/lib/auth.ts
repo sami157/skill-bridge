@@ -78,6 +78,7 @@ export async function signOut() {
   try {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('sb_auth_token');
+      window.dispatchEvent(new Event('sb-auth-updated'));
     }
   } catch {
     // ignore

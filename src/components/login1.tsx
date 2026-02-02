@@ -85,6 +85,7 @@ const Login1 = ({
         if (typeof token === 'string') {
           try {
             localStorage.setItem('sb_auth_token', token);
+            window.dispatchEvent(new Event('sb-auth-updated'));
           } catch {
             // ignore storage errors
           }

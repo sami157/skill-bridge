@@ -41,6 +41,22 @@ export function useAuth(): UseAuthReturn {
     fetchUser();
   }, []);
 
+  // React to token changes (login/logout) across tabs and same tab
+  useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'sb_auth_token') {
+        fetchUser();
+      }
+    };
+    const handleCustom = () => fetchUser();
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('sb-auth-updated', handleCustom as EventListener);
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('sb-auth-updated', handleCustom as EventListener);
+    };
+  }, []);
+
   return {
     user,
     role,
