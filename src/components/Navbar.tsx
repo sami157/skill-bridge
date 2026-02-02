@@ -42,6 +42,12 @@ const navLinks: MenuItem[] = [
 
 export function Navbar({ user, onLogout }: NavbarProps) {
   const pathname = usePathname();
+  const dashboardHref =
+    user?.role === 'ADMIN'
+      ? '/admin'
+      : user?.role === 'TUTOR'
+        ? '/tutor/dashboard'
+        : '/dashboard';
 
   const renderLinks = () => (
     <NavigationMenu>
@@ -88,6 +94,9 @@ export function Navbar({ user, onLogout }: NavbarProps) {
         <div className="hidden items-center gap-3 md:flex">
           {user ? (
             <>
+              <Button asChild variant="ghost" size="sm" className="text-sm font-medium">
+                <Link href={dashboardHref}>Dashboard</Link>
+              </Button>
               <div className="flex flex-col items-end leading-tight">
                 <span className="text-sm font-medium text-foreground">
                   {user.name || user.email}
@@ -158,6 +167,9 @@ export function Navbar({ user, onLogout }: NavbarProps) {
                       <div className="font-medium">{user.name || user.email}</div>
                       <div className="text-xs text-muted-foreground capitalize">{user.role.toLowerCase()}</div>
                     </div>
+                    <Button asChild variant="ghost" className="w-full justify-start">
+                      <Link href={dashboardHref}>Dashboard</Link>
+                    </Button>
                     <Button className="w-full" variant="outline" onClick={onLogout}>
                       Logout
                     </Button>
