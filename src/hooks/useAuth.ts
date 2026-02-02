@@ -34,15 +34,27 @@ export function useAuth(): UseAuthReturn {
       setLoading(true);
       setError(null);
       const result = await getCurrentUser();
-      setUser(result.user);
-      setRole(result.role);
-      if (typeof window !== 'undefined' && result.user) {
-        localStorage.setItem('sb_auth_user', JSON.stringify(result.user));
+      if (result.user) {
+        setUser(result.user);
+        setRole(result.role);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('sb_auth_user', JSON.stringify(result.user));
+        }
+      } else {
+        // If no user returned but a token exists, keep cached user to avoid UI flicker
+        const tokenPresent = typeof window !== 'undefined' && !!localStorage.getItem('sb_auth_token');
+        if (!tokenPresent) {
+          setUser(null);
+          setRole(null);
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch user');
-      setUser(null);
-      setRole(null);
+      const tokenPresent = typeof window !== 'undefined' && !!localStorage.getItem('sb_auth_token');
+      if (!tokenPresent) {
+        setUser(null);
+        setRole(null);
+      }
     } finally {
       setLoading(false);
     }
