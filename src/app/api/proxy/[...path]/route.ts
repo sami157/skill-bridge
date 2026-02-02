@@ -56,6 +56,11 @@ async function proxy(
   if (sessionToken) {
     headers["Authorization"] = `Bearer ${sessionToken}`;
   }
+  // Forward session cookie so backend can read it if Bearer is not used
+  const cookie = request.headers.get("cookie");
+  if (cookie) {
+    headers["Cookie"] = cookie;
+  }
 
   let body: string | undefined;
   if (method !== "GET" && method !== "DELETE") {
