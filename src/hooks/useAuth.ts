@@ -12,7 +12,7 @@ function getStoredUser(): { user: User | null; role: Role | null } {
     if (!raw) return { user: null, role: null };
     const parsed = JSON.parse(raw) as Record<string, unknown>;
     if (parsed && typeof parsed === 'object' && parsed.id && (parsed.name || parsed.email)) {
-      const user = parsed as User;
+      const user = parsed as unknown as User;
       const role = (parsed.role as Role) ?? null;
       return { user, role };
     }
