@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { fetchTutorSessions, fetchMyTutorProfile, completeBooking } from '@/lib/tutors';
+import { fetchTutorSessions, fetchBookings, fetchMyTutorProfile, completeBooking } from '@/lib/tutors';
 import { useAuth } from '@/hooks/useAuth';
 import type { Booking, TutorProfileDetail } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -23,16 +23,20 @@ export default function TutorDashboardPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [myProfileResponse, bookingsResponse] = await Promise.all([
+      const [myProfileResponse, tutorSessionsResponse, bookingsResponse] = await Promise.all([
         fetchMyTutorProfile(),
         fetchTutorSessions(),
+        fetchBookings(),
       ]);
       if (myProfileResponse.success && myProfileResponse.data) {
         setTutorProfile(myProfileResponse.data);
       }
-      if (bookingsResponse.success) {
-        setBookings(bookingsResponse.data ?? []);
-      }
+      // Use tutor sessions (GET /tutors/me/bookings) and GET /bookings; merge and dedupe by id so tutor sees all their sessions
+      const fromTutor = (tutorSessionsResponse.success && tutorSessionsResponse.data) ? tutorSessionsResponse.data : [];
+      const fromBookings = (bookingsResponse.success && bookingsResponse.data) ? bookingsResponse.data : [];
+      const byId = new Map<string, Booking>();
+      [...fromTutor, ...fromBookings].forEach((b) => byId.set(b.id, b));
+      setBookings(Array.from(byId.values()));
     } catch (err) {
       console.error('Failed to load data:', err);
     } finally {
