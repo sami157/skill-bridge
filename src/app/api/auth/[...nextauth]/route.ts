@@ -1,8 +1,14 @@
 import NextAuth, { type NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_API_URL || "https://skill-bridge-server-eight.vercel.app";
+/**
+ * Required env vars (set in Vercel → Frontend project → Settings → Environment Variables):
+ * - NEXTAUTH_URL: Your frontend URL, e.g. https://skill-bridge-one-pi.vercel.app (no trailing slash)
+ * - NEXTAUTH_SECRET: Same secret as backend (e.g. from: openssl rand -base64 32)
+ */
+
+const BACKEND_VERIFY_URL =
+  "https://skill-bridge-server-eight.vercel.app/api/auth/verify-credentials";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -14,7 +20,8 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
-        const res = await fetch(`${BACKEND_URL}/api/auth/verify-credentials`, {
+
+        const res = await fetch(BACKEND_VERIFY_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -22,15 +29,24 @@ export const authOptions: NextAuthOptions = {
             password: credentials.password,
           }),
         });
+
         const data = await res.json();
-        if (!res.ok || !data?.user) return null;
+
+        if (!data?.success || !data?.user) {
+          const message =
+            typeof data?.message === "string"
+              ? data.message
+              : "Invalid email or password";
+          throw new Error(message);
+        }
+
         const u = data.user;
         return {
           id: u.id,
           name: u.name,
           email: u.email,
-          image: u.image ?? undefined,
           role: u.role ?? "STUDENT",
+          image: u.image ?? undefined,
         };
       },
     }),
@@ -47,7 +63,8 @@ export const authOptions: NextAuthOptions = {
     session: ({ session, token }) => {
       if (session.user) {
         (session.user as { id?: string }).id = token.sub ?? "";
-        (session.user as { role?: string }).role = (token.role as string) ?? "STUDENT";
+        (session.user as { role?: string }).role =
+          (token.role as string) ?? "STUDENT";
       }
       return session;
     },
@@ -57,19 +74,20 @@ export const authOptions: NextAuthOptions = {
   },
   secret: process.env.NEXTAUTH_SECRET,
   useSecureCookies: process.env.NODE_ENV === "production",
-  cookies: process.env.NODE_ENV === "production"
-    ? {
-        sessionToken: {
-          name: "next-auth.session-token",
-          options: {
-            httpOnly: true,
-            sameSite: "none",
-            path: "/",
-            secure: true,
+  cookies:
+    process.env.NODE_ENV === "production"
+      ? {
+          sessionToken: {
+            name: "next-auth.session-token",
+            options: {
+              httpOnly: true,
+              sameSite: "none",
+              path: "/",
+              secure: true,
+            },
           },
-        },
-      }
-    : undefined,
+        }
+      : undefined,
 };
 
 const handler = NextAuth(authOptions);

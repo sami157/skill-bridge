@@ -75,31 +75,37 @@ const Login1 = ({
     setLoading(true);
 
     try {
-      const result = await signIn('credentials', {
+      const result = await signIn("credentials", {
         email: email.trim(),
         password,
         redirect: false,
       });
 
       if (result?.ok && result?.error === undefined) {
-        showToast.success('Welcome back!');
+        showToast.success("Welcome back!");
         const session = await getSession();
         const role = (session?.user as { role?: string })?.role;
-        if (role === 'ADMIN') {
-          router.push('/admin');
-        } else if (role === 'TUTOR') {
-          router.push('/tutor/dashboard');
+        if (role === "ADMIN") {
+          router.push("/admin");
+        } else if (role === "TUTOR") {
+          router.push("/tutor/dashboard");
+        } else if (role === "STUDENT") {
+          router.push("/dashboard");
         } else {
-          router.push('/dashboard');
+          router.push("/");
         }
         router.refresh();
       } else {
-        const errorMsg = result?.error ?? 'Login failed. Please check your credentials.';
+        const errorMsg =
+          typeof result?.error === "string"
+            ? result.error
+            : "Login failed. Please check your credentials.";
         setError(errorMsg);
         showToast.error(errorMsg);
       }
     } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : 'An unexpected error occurred';
+      const errorMsg =
+        err instanceof Error ? err.message : "An unexpected error occurred";
       setError(errorMsg);
       showToast.error(errorMsg);
     } finally {
