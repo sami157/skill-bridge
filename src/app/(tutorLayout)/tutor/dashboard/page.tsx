@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { fetchBookings, fetchMyTutorProfile, completeBooking } from '@/lib/tutors';
+import { fetchTutorSessions, fetchMyTutorProfile, completeBooking } from '@/lib/tutors';
 import { useAuth } from '@/hooks/useAuth';
 import type { Booking, TutorProfileDetail } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -25,7 +25,7 @@ export default function TutorDashboardPage() {
       setLoading(true);
       const [myProfileResponse, bookingsResponse] = await Promise.all([
         fetchMyTutorProfile(),
-        fetchBookings(),
+        fetchTutorSessions(),
       ]);
       if (myProfileResponse.success && myProfileResponse.data) {
         setTutorProfile(myProfileResponse.data);
@@ -124,32 +124,6 @@ export default function TutorDashboardPage() {
             </Button>
           </div>
         )}
-      </div>
-
-      {/* Tutor flow flowchart: Register → Create Profile → Set Availability → View Sessions → Mark Complete */}
-      <div className="mb-8 rounded-lg border bg-muted/30 p-5">
-        <h2 className="text-sm font-medium text-muted-foreground mb-4">Tutor flow</h2>
-        <div className="flex flex-col items-center gap-0">
-          <div className="rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm">Register</div>
-          <div className="text-muted-foreground">│</div>
-          <div className="text-muted-foreground">└──────────────┘</div>
-          <div className="text-muted-foreground">│</div>
-          <div className="text-muted-foreground">▼</div>
-          <Link href="/tutor/profile" className="rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-muted hover:underline">
-            Create Profile
-          </Link>
-          <div className="text-muted-foreground">│</div>
-          <div className="text-muted-foreground">▼</div>
-          <Link href="/tutor/availability" className="rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-muted hover:underline">
-            Set Availability
-          </Link>
-          <div className="text-muted-foreground">│</div>
-          <div className="text-muted-foreground">▼</div>
-          <div className="rounded-md border border-primary bg-primary/10 px-4 py-2 text-sm font-medium text-primary shadow-sm">View Sessions</div>
-          <div className="text-muted-foreground">│</div>
-          <div className="text-muted-foreground">▼</div>
-          <div className="rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm">Mark Complete</div>
-        </div>
       </div>
 
       {/* Stats Cards */}
@@ -288,7 +262,6 @@ export default function TutorDashboardPage() {
           <div className="border rounded-lg p-8 text-center">
             <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">No upcoming sessions</p>
-            <p className="text-sm text-muted-foreground mt-2">Confirmed bookings from students appear here. Try &quot;Refresh&quot; if you just received a booking.</p>
           </div>
         )}
       </div>

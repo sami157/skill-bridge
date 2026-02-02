@@ -67,11 +67,24 @@ export async function createBooking(booking: BookingRequest): Promise<BookingRes
 }
 
 /**
- * Fetch bookings for current user
+ * Fetch bookings for current user (student/tutor/admin via GET /bookings)
  */
 export async function fetchBookings(status?: 'CONFIRMED' | 'COMPLETED' | 'CANCELLED'): Promise<BookingsResponse> {
   const endpoint = status ? `/bookings?status=${status}` : '/bookings';
   const response = await api.get<Booking[]>(endpoint);
+  return {
+    success: response.success,
+    data: response.data || [],
+    message: response.message,
+  };
+}
+
+/**
+ * Fetch upcoming sessions for the logged-in tutor only (GET /tutors/me/bookings).
+ * Use this on the tutor dashboard so sessions are fetched by TutorProfile.id.
+ */
+export async function fetchTutorSessions(): Promise<BookingsResponse> {
+  const response = await api.get<Booking[]>('/tutors/me/bookings');
   return {
     success: response.success,
     data: response.data || [],
