@@ -25,12 +25,15 @@ export default function TutorAvailabilityPage() {
   });
 
   useEffect(() => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     loadTutorProfile();
-  }, []);
+  }, [user]);
 
   const loadTutorProfile = async () => {
     if (!user) return;
-
     try {
       setLoading(true);
       setError(null);
@@ -197,6 +200,17 @@ export default function TutorAvailabilityPage() {
       year: 'numeric',
     });
   };
+
+  if (!user) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-4">Manage Availability</h1>
+        <div className="p-6 rounded-lg border bg-muted/50">
+          <p className="text-muted-foreground">Loading your account...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

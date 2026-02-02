@@ -21,11 +21,16 @@ export interface UseAuthReturn {
 }
 
 /**
- * Auth state from localStorage (token-based). Unified with login API.
+ * Auth state from localStorage (token-based). Session persists across reloads.
+ * Initial state is read from localStorage on first client render so guards
+ * don't redirect to login before the session is loaded.
  */
 export function useAuth(): UseAuthReturn {
   const router = useRouter();
-  const [auth, setAuth] = useState<{ user: AuthUser | null; token: string | null } | null>(null);
+  const [auth, setAuth] = useState<{ user: AuthUser | null; token: string | null } | null>(() => {
+    if (typeof window === 'undefined') return null;
+    return { user: getAuthUser(), token: getAuthToken() };
+  });
 
   const syncAuth = () => {
     setAuth({ user: getAuthUser(), token: getAuthToken() });

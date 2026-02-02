@@ -26,16 +26,18 @@ export default function TutorProfilePage() {
   });
 
   useEffect(() => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
     loadData();
-  }, []);
+  }, [user]);
 
   const loadData = async () => {
     if (!user) return;
-
     try {
       setLoading(true);
       setError(null);
-
       const [myProfileResponse, categoriesResponse] = await Promise.all([
         fetchMyTutorProfile(),
         fetchCategories(),
@@ -134,6 +136,17 @@ export default function TutorProfilePage() {
       setSaving(false);
     }
   };
+
+  if (!user) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-4">Tutor Profile</h1>
+        <div className="p-6 rounded-lg border bg-muted/50">
+          <p className="text-muted-foreground">Loading your account...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
