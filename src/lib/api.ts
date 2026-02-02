@@ -4,7 +4,7 @@
  * using getAuthToken() from auth-storage (localStorage).
  */
 
-import { getAuthToken } from "./auth-storage";
+import { getAuthToken, clearAuth } from "./auth-storage";
 
 export const BASE_URL =
   (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_API_URL) ||
@@ -55,6 +55,7 @@ export async function apiGet<T>(path: string): Promise<ApiResponse<T>> {
     });
 
     if (!response.ok) {
+      if (response.status === 401 && isBrowser) clearAuth();
       let errorData: { message?: string; details?: unknown };
       try {
         const errorText = await response.text();
@@ -62,7 +63,6 @@ export async function apiGet<T>(path: string): Promise<ApiResponse<T>> {
       } catch {
         errorData = { message: `HTTP error! status: ${response.status}` };
       }
-      
       return {
         success: false,
         message: errorData.message || `HTTP error! status: ${response.status}`,
@@ -136,6 +136,7 @@ class ApiClient {
       const response = await fetch(url, config);
       
       if (!response.ok) {
+        if (response.status === 401 && isBrowser) clearAuth();
         let errorData;
         let errorText = '';
         try {
@@ -144,8 +145,6 @@ class ApiClient {
         } catch {
           errorData = { message: `HTTP error! status: ${response.status}`, raw: errorText };
         }
-        
-        // Log CORS/403 errors for debugging
         if (response.status === 403) {
           console.error('403 Forbidden - Possible CORS issue:', {
             url,
