@@ -82,21 +82,42 @@ const Login1 = ({
         body: JSON.stringify({ email: email.trim(), password }),
       });
       const text = await verifyRes.text();
-      let data: { success?: boolean; token?: string; message?: string } = {};
+      let data: {
+        success?: boolean;
+        user?: { id: string; name: string; email: string; role: string; image?: string | null; emailVerified?: boolean };
+        token?: string;
+        message?: string;
+      } = {};
       try {
         data = text?.trim() ? JSON.parse(text) : {};
       } catch {
         data = {};
+      }
+      if (data?.success) {
+        console.log("[Login] verify-credentials response:", { success: data.success, user: data.user, token: data.token });
       }
       if (!data?.success || !data?.token) {
         setError(typeof data?.message === "string" ? data.message : "Invalid email or password");
         showToast.error(typeof data?.message === "string" ? data.message : "Invalid email or password");
         return;
       }
-      const result = await signIn("credentials", {
-        token: data.token,
-        redirect: false,
-      });
+      let result;
+      try {
+        result = await signIn("credentials", {
+          token: data.token,
+          redirect: false,
+        });
+      } catch (signInErr) {
+        const msg = signInErr instanceof Error ? signInErr.message : "Sign-in failed";
+        if (msg.includes("json") || msg.includes("JSON")) {
+          setError("Session error. Ensure NEXTAUTH_SECRET matches on frontend and backend.");
+          showToast.error("Session error. Check NEXTAUTH_SECRET.");
+        } else {
+          setError(msg);
+          showToast.error(msg);
+        }
+        return;
+      }
 
       if (result?.ok && result?.error === undefined) {
         showToast.success("Welcome back!");

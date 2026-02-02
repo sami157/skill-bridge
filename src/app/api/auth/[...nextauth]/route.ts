@@ -70,4 +70,22 @@ export const authOptions: NextAuthOptions = {
 };
 
 const handler = NextAuth(authOptions);
-export { handler as GET, handler as POST };
+const baseUrl = process.env.NEXTAUTH_URL ?? "";
+
+async function safeHandler(
+  req: Request,
+  context: { params: Promise<{ nextauth: string[] }> }
+) {
+  try {
+    return await handler(req, context);
+  } catch (err) {
+    console.error("[NextAuth] error:", err);
+    return new Response(
+      JSON.stringify({ url: `${baseUrl}/error?error=Callback` }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
+  }
+}
+
+export const GET = safeHandler;
+export const POST = safeHandler;
