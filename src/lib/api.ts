@@ -7,19 +7,8 @@
  * - /api/auth/* (Better Auth routes with /api prefix)
  */
 
-// Support legacy name as a fallback but prefer NEXT_PUBLIC_API_URL
-const rawBase =
-  process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_SERVER_ROOT_URL;
-
-if (!rawBase) {
-  throw new Error(
-    'NEXT_PUBLIC_API_URL is not set. Please add it to your .env file.\n' +
-    'Example: NEXT_PUBLIC_API_URL=https://skill-bridge-server-eight.vercel.app'
-  );
-}
-
-// Normalize: remove trailing slash once
-export const BASE_URL = rawBase.replace(/\/$/, '');
+// Hard-coded API base to avoid env drift; keep without trailing slash
+export const BASE_URL = 'https://skill-bridge-server-eight.vercel.app';
 
 // Ensure exactly one slash between base and path
 const buildUrl = (base: string, path: string) => {
