@@ -168,11 +168,8 @@ const Register1 = ({
         role: role,
       });
 
-      // eslint-disable-next-line no-console
-      console.log("Signup response", response);
-
-      const user = response.user;
-      const token = response.token;
+      const user = response.user as { name?: string; email?: string; role?: string } | null;
+      const token = response.token as string | undefined;
       const success = response.success;
 
       if (success && user && token) {
