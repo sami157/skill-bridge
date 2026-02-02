@@ -71,9 +71,10 @@ export interface TutorProfileDetail extends TutorProfile {
   bookingsAsTutor?: BookingWithReview[];
 }
 
+/** Create booking: tutorUserId must be the tutor's User.id (not TutorProfile.id). */
 export interface BookingRequest {
   studentId: string;
-  tutorId: string;
+  tutorUserId: string;
   startTime: string; // ISO 8601
   endTime: string; // ISO 8601
 }

@@ -82,10 +82,10 @@ function TutorDetailContent() {
         return;
       }
 
-      // Schema: Booking.tutorId = TutorProfile.id. tutor from GET /tutors/:id is TutorProfile, so tutor.id is correct.
+      // API expects tutor's User.id (tutorUserId); backend resolves TutorProfile and stores Booking.tutorId = profile.id.
       const booking: BookingRequest = {
         studentId: user.id,
-        tutorId: tutor.id,
+        tutorUserId: tutor.user.id,
         startTime: startTime.toISOString(),
         endTime: endTime.toISOString(),
       };

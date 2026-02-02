@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { fetchTutorSessions, fetchBookings, fetchMyTutorProfile, completeBooking } from '@/lib/tutors';
+import { fetchTutorBookings, fetchMyTutorProfile, completeBooking } from '@/lib/tutors';
 import { useAuth } from '@/hooks/useAuth';
 import type { Booking, TutorProfileDetail } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -23,20 +23,14 @@ export default function TutorDashboardPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [myProfileResponse, tutorSessionsResponse, bookingsResponse] = await Promise.all([
+      const [myProfileResponse, tutorBookingsResponse] = await Promise.all([
         fetchMyTutorProfile(),
-        fetchTutorSessions(),
-        fetchBookings(),
+        fetchTutorBookings(),
       ]);
       if (myProfileResponse.success && myProfileResponse.data) {
         setTutorProfile(myProfileResponse.data);
       }
-      // Use tutor sessions (GET /tutors/me/bookings) and GET /bookings; merge and dedupe by id so tutor sees all their sessions
-      const fromTutor = (tutorSessionsResponse.success && tutorSessionsResponse.data) ? tutorSessionsResponse.data : [];
-      const fromBookings = (bookingsResponse.success && bookingsResponse.data) ? bookingsResponse.data : [];
-      const byId = new Map<string, Booking>();
-      [...fromTutor, ...fromBookings].forEach((b) => byId.set(b.id, b));
-      setBookings(Array.from(byId.values()));
+      setBookings(tutorBookingsResponse.success && Array.isArray(tutorBookingsResponse.data) ? tutorBookingsResponse.data : []);
     } catch (err) {
       console.error('Failed to load data:', err);
     } finally {
@@ -68,7 +62,7 @@ export default function TutorDashboardPage() {
     }
   };
 
-  // Upcoming Sessions = tutor's bookings (from GET /tutors/me/bookings) that are CONFIRMED and not yet ended
+  // Upcoming = tutor's bookings (GET /bookings/tutor) that are CONFIRMED and not yet ended
   const now = new Date();
   const upcoming = bookings
     .filter(
