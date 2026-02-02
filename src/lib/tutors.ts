@@ -109,6 +109,30 @@ export async function createReview(review: ReviewRequest): Promise<{ success: bo
 }
 
 /**
+ * Get current user's tutor profile (Tutor only)
+ */
+export async function fetchMyTutorProfile(): Promise<{ success: boolean; data: TutorProfileDetail | null; message?: string }> {
+  const response = await api.get<TutorProfileDetail | null>('/tutors/me');
+  return {
+    success: response.success,
+    data: response.data ?? null,
+    message: response.message,
+  };
+}
+
+/**
+ * Create tutor profile (Tutor only). Backend sets userId from session.
+ */
+export async function createTutorProfile(data: Omit<TutorProfileUpdate, 'userId'>): Promise<{ success: boolean; data?: TutorProfile; message?: string }> {
+  const response = await api.post<TutorProfile>('/tutors', data);
+  return {
+    success: response.success,
+    data: response.data,
+    message: response.message,
+  };
+}
+
+/**
  * Update tutor profile
  */
 export async function updateTutorProfile(update: TutorProfileUpdate): Promise<{ success: boolean; data?: TutorProfile; message?: string }> {

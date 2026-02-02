@@ -27,7 +27,7 @@ export interface AuthResponse {
 
 /**
  * Sign in with email and password.
- * Treat presence of { token, user } as success even if backend does not return a `success` flag.
+ * Better Auth returns { user, session } on success. We treat presence of user as success.
  */
 export async function signIn(email: string, password: string) {
   const res = await api.post<Record<string, unknown>>('/api/auth/sign-in/email', {
@@ -37,14 +37,14 @@ export async function signIn(email: string, password: string) {
 
   const user = (res as { user?: User; data?: { user?: User } }).user ?? res.data?.user;
   const success = !!user || res.success === true;
-  const message = res.message || (success ? undefined : 'Login failed');
+  const message = (res as { message?: string }).message || (success ? undefined : 'Login failed');
 
-  return { success, user, message };
+  return { success, user: user ?? null, message };
 }
 
 /**
  * Sign up with email and password.
- * Treat presence of { token, user } as success even if backend does not return a `success` flag.
+ * Better Auth returns { user, session } on success. Role is passed and validated on backend.
  */
 export async function signUp(data: {
   name: string;
@@ -63,9 +63,9 @@ export async function signUp(data: {
 
   const user = (res as { user?: User; data?: { user?: User } }).user ?? res.data?.user;
   const success = !!user || res.success === true;
-  const message = res.message || (success ? undefined : 'Registration failed');
+  const message = (res as { message?: string }).message || (success ? undefined : 'Registration failed');
 
-  return { success, user, message };
+  return { success, user: user ?? null, message };
 }
 
 /**
@@ -84,18 +84,18 @@ export async function signOut() {
 
 /**
  * Get current user profile (used to check auth status)
- * This endpoint requires authentication and returns the current user
+ * Backend returns { success: true, data: user }. Requires session cookie.
  */
 export async function getCurrentUser(): Promise<{ user: User | null; role: Role | null }> {
   const response = await api.get<User>('/users/profile');
 
-  // Backend might not include a `success` flag; prefer data presence.
-  const user = (response as { user?: User; data?: User }).user ?? response.data ?? null;
+  const raw = response as { success?: boolean; data?: User; user?: User };
+  const user = raw.data ?? raw.user ?? null;
 
-  if (user) {
+  if (user && typeof user === 'object' && user.id) {
     return {
-      user,
-      role: (user as User).role,
+      user: user as User,
+      role: (user as User).role as Role,
     };
   }
 

@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import { signIn } from "@/lib/auth";
+import { signIn, getCurrentUser } from "@/lib/auth";
 import { showToast } from "@/lib/toast";
 import { Eye, EyeOff } from "lucide-react";
 
@@ -76,28 +76,34 @@ const Login1 = ({
 
     try {
       const response = await signIn(email, password);
-      const user = response.user as { name?: string; email?: string; role?: string } | null;
       const success = response.success;
 
-      if (success && user) {
-        // Cache user locally for quick navbar render; session cookie is set by backend
-        try {
-          localStorage.setItem('sb_auth_user', JSON.stringify(user));
-        } catch {
-          // ignore
-        }
-        window.dispatchEvent(new Event('sb-auth-updated'));
+      if (success) {
+        // Fetch full user with role from backend (session cookie is now set)
+        const { user } = await getCurrentUser();
+        const fullUser = user as { name?: string; email?: string; role?: string } | null;
 
-        showToast.success(`Welcome back, ${user.name || user.email}!`);
+        if (fullUser) {
+          try {
+            localStorage.setItem('sb_auth_user', JSON.stringify(fullUser));
+          } catch {
+            // ignore
+          }
+          window.dispatchEvent(new Event('sb-auth-updated'));
 
-        // Redirect based on role
-        if (user.role === 'STUDENT') {
-          router.push('/dashboard');
-        } else if (user.role === 'TUTOR') {
-          router.push('/tutor/dashboard');
-        } else if (user.role === 'ADMIN') {
-          router.push('/admin');
+          showToast.success(`Welcome back, ${fullUser.name || fullUser.email}!`);
+
+          if (fullUser.role === 'STUDENT') {
+            router.push('/dashboard');
+          } else if (fullUser.role === 'TUTOR') {
+            router.push('/tutor/dashboard');
+          } else if (fullUser.role === 'ADMIN') {
+            router.push('/admin');
+          } else {
+            router.push('/');
+          }
         } else {
+          // Session set but profile fetch failed - still redirect to home
           router.push('/');
         }
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { fetchTutorById, updateTutorProfile, fetchCategories, fetchBookings } from '@/lib/tutors';
+import { fetchMyTutorProfile, createTutorProfile, updateTutorProfile, fetchCategories } from '@/lib/tutors';
 import type { TutorProfileDetail, Category } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,7 @@ export default function TutorProfilePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [isCreateMode, setIsCreateMode] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -33,36 +34,32 @@ export default function TutorProfilePage() {
 
     try {
       setLoading(true);
-      
-      // First, try to get tutor profile ID from bookings
-      const bookingsResponse = await fetchBookings();
-      let tutorProfileId: string | null = null;
-      
-      if (bookingsResponse.success && bookingsResponse.data.length > 0) {
-        tutorProfileId = bookingsResponse.data[0].tutor?.id || null;
-      }
-      
-      const [tutorResponse, categoriesResponse] = await Promise.all([
-        tutorProfileId ? fetchTutorById(tutorProfileId) : Promise.resolve({ success: false, data: null }),
+      setError(null);
+
+      const [myProfileResponse, categoriesResponse] = await Promise.all([
+        fetchMyTutorProfile(),
         fetchCategories(),
       ]);
 
-      if (tutorResponse.success && tutorResponse.data) {
-        setTutorProfile(tutorResponse.data);
+      if (myProfileResponse.success && myProfileResponse.data) {
+        setTutorProfile(myProfileResponse.data);
+        setIsCreateMode(false);
         setFormData({
-          bio: tutorResponse.data.bio || '',
-          pricePerHour: tutorResponse.data.pricePerHour.toString(),
-          selectedSubjects: tutorResponse.data.subjects.map(s => s.id),
+          bio: myProfileResponse.data.bio || '',
+          pricePerHour: myProfileResponse.data.pricePerHour.toString(),
+          selectedSubjects: myProfileResponse.data.subjects.map(s => s.id),
         });
-      } else if (!tutorProfileId) {
-        setError('Tutor profile not found. Please create your tutor profile first.');
+      } else {
+        setTutorProfile(null);
+        setIsCreateMode(true);
+        setFormData({ bio: '', pricePerHour: '', selectedSubjects: [] });
       }
 
       if (categoriesResponse.success && categoriesResponse.data) {
         setCategories(categoriesResponse.data);
       }
     } catch (err) {
-      console.error('Failed to load data:', err);
+      console.error('Failed to load data', err);
       setError('Failed to load tutor profile');
     } finally {
       setLoading(false);
@@ -90,26 +87,46 @@ export default function TutorProfilePage() {
       return;
     }
 
+    if (formData.selectedSubjects.length === 0) {
+      setError('Please select at least one subject');
+      return;
+    }
+
     try {
       setSaving(true);
       setError(null);
       setSuccess(false);
 
-      const response = await updateTutorProfile({
-        userId: user.id,
-        bio: formData.bio.trim() || undefined,
-        pricePerHour: price,
-        subjectsIds: formData.selectedSubjects,
-      });
-
-      if (response.success) {
-        setSuccess(true);
-        setTimeout(() => setSuccess(false), 3000);
-        if (response.data) {
-          setTutorProfile(response.data);
+      if (isCreateMode) {
+        const response = await createTutorProfile({
+          bio: formData.bio.trim() || undefined,
+          pricePerHour: price,
+          subjectsIds: formData.selectedSubjects,
+        });
+        if (response.success && response.data) {
+          setSuccess(true);
+          setTutorProfile(response.data as TutorProfileDetail);
+          setIsCreateMode(false);
+          setTimeout(() => setSuccess(false), 3000);
+        } else {
+          setError(response.message || 'Failed to create profile');
         }
       } else {
-        setError(response.message || 'Failed to update profile');
+        const response = await updateTutorProfile({
+          userId: user.id,
+          bio: formData.bio.trim() || undefined,
+          pricePerHour: price,
+          subjectsIds: formData.selectedSubjects,
+        });
+        if (response.success) {
+          setSuccess(true);
+          setTimeout(() => setSuccess(false), 3000);
+          if (response.data) {
+            setTutorProfile(response.data as TutorProfileDetail);
+          }
+        } else {
+          setError(response.message || 'Failed to update profile');
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -129,26 +146,14 @@ export default function TutorProfilePage() {
     );
   }
 
-  if (!tutorProfile) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-4">Tutor Profile</h1>
-        <div className="text-center py-12">
-          <p className="text-muted-foreground mb-4">Tutor profile not found</p>
-          <p className="text-sm text-muted-foreground">You may need to create your tutor profile first</p>
-        </div>
-      </div>
-    );
-  }
-
   // Get all subjects from categories
   const allSubjects = categories.flatMap(cat => cat.subjects || []);
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-3xl">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">Edit Tutor Profile</h1>
-        <p className="text-muted-foreground">Update your profile information</p>
+        <h1 className="text-3xl font-bold mb-2">{isCreateMode ? 'Create Tutor Profile' : 'Edit Tutor Profile'}</h1>
+        <p className="text-muted-foreground">{isCreateMode ? 'Set up your tutor profile to start receiving bookings' : 'Update your profile information'}</p>
       </div>
 
       {/* Success Message */}
@@ -246,12 +251,12 @@ export default function TutorProfilePage() {
             {saving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
+                {isCreateMode ? 'Creating...' : 'Saving...'}
               </>
             ) : (
               <>
                 <Save className="mr-2 h-4 w-4" />
-                Save Changes
+                {isCreateMode ? 'Create Profile' : 'Save Changes'}
               </>
             )}
           </Button>

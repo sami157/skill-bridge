@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import { signUp } from "@/lib/auth";
+import { signUp, getCurrentUser } from "@/lib/auth";
 import { showToast } from "@/lib/toast";
 import { Eye, EyeOff } from "lucide-react";
 
@@ -168,30 +168,35 @@ const Register1 = ({
         role: role,
       });
 
-      const user = response.user as { name?: string; email?: string; role?: string } | null;
       const success = response.success;
 
-      if (success && user) {
-        try {
-          localStorage.setItem('sb_auth_user', JSON.stringify(user));
-        } catch {
-          // ignore storage errors
-        }
-        window.dispatchEvent(new Event('sb-auth-updated'));
+      if (success) {
+        const { user } = await getCurrentUser();
+        const fullUser = user as { name?: string; email?: string; role?: string } | null;
 
-        showToast.success(`Account created successfully! Welcome, ${user.name || user.email}!`);
-        
-        // Redirect based on role
-        if (user.role === 'STUDENT') {
-          router.push('/dashboard');
-        } else if (user.role === 'TUTOR') {
-          router.push('/tutor/dashboard');
-        } else if (user.role === 'ADMIN') {
-          router.push('/admin');
+        if (fullUser) {
+          try {
+            localStorage.setItem('sb_auth_user', JSON.stringify(fullUser));
+          } catch {
+            // ignore storage errors
+          }
+          window.dispatchEvent(new Event('sb-auth-updated'));
+
+          showToast.success(`Account created successfully! Welcome, ${fullUser.name || fullUser.email}!`);
+
+          if (fullUser.role === 'STUDENT') {
+            router.push('/dashboard');
+          } else if (fullUser.role === 'TUTOR') {
+            router.push('/tutor/dashboard');
+          } else if (fullUser.role === 'ADMIN') {
+            router.push('/admin');
+          } else {
+            router.push('/');
+          }
         } else {
           router.push('/');
         }
-        
+
         router.refresh();
       } else {
         const errorMsg = response.message || 'Registration failed. Please try again.';

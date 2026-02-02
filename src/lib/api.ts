@@ -7,8 +7,10 @@
  * - /api/auth/* (Better Auth routes with /api prefix)
  */
 
-// Hard-coded API base to avoid env drift; keep without trailing slash
-export const BASE_URL = 'https://skill-bridge-server-eight.vercel.app';
+// Backend base URL: use env for local dev, fallback to production
+export const BASE_URL =
+  (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_API_URL) ||
+  'https://skill-bridge-server-eight.vercel.app';
 
 // Ensure exactly one slash between base and path
 const buildUrl = (base: string, path: string) => {
