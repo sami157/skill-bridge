@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { fetchBookings, fetchTutorById, completeBooking } from '@/lib/tutors';
+import Link from 'next/link';
+import { fetchBookings, fetchMyTutorProfile, completeBooking } from '@/lib/tutors';
 import { useAuth } from '@/hooks/useAuth';
 import type { Booking, TutorProfileDetail } from '@/lib/types';
 import { Button } from '@/components/ui/button';
@@ -22,26 +23,15 @@ export default function TutorDashboardPage() {
   const loadData = async () => {
     try {
       setLoading(true);
-      
-      // Load bookings
-      const bookingsResponse = await fetchBookings();
-      
+      const [myProfileResponse, bookingsResponse] = await Promise.all([
+        fetchMyTutorProfile(),
+        fetchBookings(),
+      ]);
+      if (myProfileResponse.success && myProfileResponse.data) {
+        setTutorProfile(myProfileResponse.data);
+      }
       if (bookingsResponse.success) {
         setBookings(bookingsResponse.data);
-        
-        // Try to get tutor profile ID from bookings
-        if (bookingsResponse.data.length > 0 && bookingsResponse.data[0].tutor) {
-          const tutorId = bookingsResponse.data[0].tutor.id;
-          try {
-            const tutorResponse = await fetchTutorById(tutorId);
-            if (tutorResponse.success && tutorResponse.data) {
-              setTutorProfile(tutorResponse.data);
-            }
-          } catch (err) {
-            console.error('Failed to load tutor profile:', err);
-            // Continue without tutor profile - we can use data from bookings
-          }
-        }
       }
     } catch (err) {
       console.error('Failed to load data:', err);
@@ -89,9 +79,8 @@ export default function TutorDashboardPage() {
     return sum + hours * booking.tutor.pricePerHour;
   }, 0);
 
-  // Get tutor rating and review count from profile or bookings
-  const tutorRating = tutorProfile?.rating || bookings[0]?.tutor?.rating || 0;
-  const reviewCount = tutorProfile?.reviewCount || bookings[0]?.tutor?.reviewCount || 0;
+  const tutorRating = tutorProfile?.rating ?? 0;
+  const reviewCount = tutorProfile?.reviewCount ?? 0;
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -116,6 +105,14 @@ export default function TutorDashboardPage() {
       <div className="mb-6">
         <h1 className="text-3xl font-bold mb-2">Tutor Dashboard</h1>
         <p className="text-muted-foreground">Manage your sessions and track your performance</p>
+        {!loading && !tutorProfile && (
+          <div className="mt-4 p-4 rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30">
+            <p className="text-sm text-amber-800 dark:text-amber-200">Create your tutor profile to receive bookings and show up in search.</p>
+            <Button asChild variant="outline" size="sm" className="mt-3">
+              <Link href="/tutor/profile">Create profile</Link>
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Stats Cards */}

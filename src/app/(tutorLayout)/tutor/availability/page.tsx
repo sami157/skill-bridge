@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
-import { fetchTutorById, updateTutorProfile, fetchBookings } from '@/lib/tutors';
+import { fetchMyTutorProfile, updateTutorProfile } from '@/lib/tutors';
 import type { TutorProfileDetail, AvailabilitySlot } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,7 +18,6 @@ export default function TutorAvailabilityPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  // Form state for adding new slot
   const [newSlot, setNewSlot] = useState({
     date: '',
     startTime: '',
@@ -33,32 +33,20 @@ export default function TutorAvailabilityPage() {
 
     try {
       setLoading(true);
-      
-      // First, try to get tutor profile ID from bookings
-      const bookingsResponse = await fetchBookings();
-      let tutorProfileId: string | null = null;
-      
-      if (bookingsResponse.success && bookingsResponse.data.length > 0) {
-        tutorProfileId = bookingsResponse.data[0].tutor?.id || null;
-      }
-      
-      if (!tutorProfileId) {
-        setError('Tutor profile not found. Please create your tutor profile first.');
-        setLoading(false);
-        return;
-      }
-      
-      const response = await fetchTutorById(tutorProfileId);
-      
+      setError(null);
+      const response = await fetchMyTutorProfile();
+
       if (response.success && response.data) {
         setTutorProfile(response.data);
-        // Parse availability slots from the availability object
         if (response.data.availability) {
           const parsedSlots = parseAvailability(response.data.availability);
           setSlots(parsedSlots);
+        } else {
+          setSlots([]);
         }
       } else {
-        setError('Failed to load tutor profile');
+        setTutorProfile(null);
+        setError('Create your tutor profile first to set availability.');
       }
     } catch (err) {
       console.error('Failed to load tutor profile:', err);
@@ -216,6 +204,20 @@ export default function TutorAvailabilityPage() {
         <h1 className="text-3xl font-bold mb-4">Manage Availability</h1>
         <div className="animate-pulse space-y-4">
           <div className="h-64 bg-muted rounded"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!tutorProfile && error) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-4">Manage Availability</h1>
+        <div className="p-6 rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30">
+          <p className="text-amber-800 dark:text-amber-200 mb-4">{error}</p>
+          <Button asChild>
+            <Link href="/tutor/profile">Create tutor profile</Link>
+          </Button>
         </div>
       </div>
     );
