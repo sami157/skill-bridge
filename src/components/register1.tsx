@@ -177,9 +177,9 @@ const Register1 = ({
         const token = verifyData?.success ? verifyData.token : null;
         const signInResult = token
           ? await signIn("credentials", { token, redirect: false })
-          : { ok: false };
+          : { ok: false as const, error: "Could not sign in" };
 
-        if (signInResult?.ok && signInResult?.error === undefined) {
+        if (signInResult?.ok && !signInResult?.error) {
           showToast.success(`Account created successfully! Welcome, ${name.trim()}!`);
           const session = await getSession();
           const userRole = (session?.user as { role?: string })?.role;
