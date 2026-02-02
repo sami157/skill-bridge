@@ -75,6 +75,13 @@ export async function signUp(data: {
  * Sign out current session
  */
 export async function signOut() {
+  try {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('sb_auth_token');
+    }
+  } catch {
+    // ignore
+  }
   return api.post('/api/auth/sign-out');
 }
 
