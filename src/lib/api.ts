@@ -5,19 +5,32 @@
  * Backend routes:
  * - /tutors, /categories, /subjects, /bookings, /users (no /api prefix)
  * - /api/auth/* (register, verify-credentials)
+ * In browser, requests go to same-origin /api/proxy/* so NextAuth session cookie
+ * is forwarded to the backend as Authorization: Bearer.
  */
 
-// Backend base URL: use env for local dev, fallback to production
+// Backend base URL (used by proxy server-side; client uses /api/proxy)
 export const BASE_URL =
   (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_API_URL) ||
   'https://skill-bridge-server-eight.vercel.app';
 
-// Ensure exactly one slash between base and path
+// In browser, use same-origin proxy so NextAuth session cookie is forwarded as Bearer token to backend
+const isBrowser = typeof window !== 'undefined';
+const PROXY_PREFIX = '/api/proxy';
+
 const buildUrl = (base: string, path: string) => {
   const cleanBase = base.replace(/\/$/, '');
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
   return `${cleanBase}${cleanPath}`;
 };
+
+function getUrl(path: string): string {
+  const p = path.startsWith('/') ? path : `/${path}`;
+  if (isBrowser) {
+    return `${PROXY_PREFIX}${p}`;
+  }
+  return buildUrl(BASE_URL, path);
+}
 
 export interface ApiResponse<T> {
   success: boolean;
@@ -37,7 +50,7 @@ export interface ApiError {
  * Does NOT add /api prefix (except for /api/auth routes which should already have it)
  */
 export async function apiGet<T>(path: string): Promise<ApiResponse<T>> {
-  const url = buildUrl(BASE_URL, path);
+  const url = getUrl(path);
   
   try {
     const response = await fetch(url, {
@@ -106,17 +119,14 @@ class ApiClient {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
-    // Only /api/auth routes have /api prefix, all other routes don't
-    // So we use the endpoint as-is (auth routes already have /api/auth prefix)
-    // All routes use NEXT_PUBLIC_API_URL as base URL
-    const url = buildUrl(this.baseURL, endpoint);
+    const url = getUrl(endpoint);
 
     const defaultHeaders: HeadersInit = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
     };
 
-    // Include credentials (cookies) for Better Auth
+    // Include credentials so NextAuth cookie is sent to our proxy (same-origin)
     const config: RequestInit = {
       ...options,
       headers: {
