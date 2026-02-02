@@ -174,7 +174,13 @@ const Register1 = ({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: email.trim(), password }),
         });
-        const verifyData = await verifyRes.json();
+        const verifyText = await verifyRes.text();
+        let verifyData: { success?: boolean; token?: string } = {};
+        try {
+          verifyData = verifyText?.trim() ? JSON.parse(verifyText) : {};
+        } catch {
+          verifyData = {};
+        }
         const token = verifyData?.success ? verifyData.token : null;
         const signInResult = token
           ? await signIn("credentials", { token, redirect: false })

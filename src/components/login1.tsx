@@ -81,7 +81,13 @@ const Login1 = ({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim(), password }),
       });
-      const data = await verifyRes.json();
+      const text = await verifyRes.text();
+      let data: { success?: boolean; token?: string; message?: string } = {};
+      try {
+        data = text?.trim() ? JSON.parse(text) : {};
+      } catch {
+        data = {};
+      }
       if (!data?.success || !data?.token) {
         setError(typeof data?.message === "string" ? data.message : "Invalid email or password");
         showToast.error(typeof data?.message === "string" ? data.message : "Invalid email or password");

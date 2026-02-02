@@ -27,7 +27,9 @@ async function getAuthToken(): Promise<string | null> {
   if (cachedToken) return cachedToken;
   try {
     const res = await fetch('/api/auth/token', { credentials: 'include' });
-    const data = await res.json();
+    const text = await res.text();
+    if (!text?.trim()) return null;
+    const data = JSON.parse(text) as { token?: string | null };
     cachedToken = data?.token ?? null;
     return cachedToken;
   } catch {
@@ -72,9 +74,10 @@ export async function apiGet<T>(path: string): Promise<ApiResponse<T>> {
     });
 
     if (!response.ok) {
-      let errorData;
+      let errorData: { message?: string; details?: unknown };
       try {
-        errorData = await response.json();
+        const errorText = await response.text();
+        errorData = errorText?.trim() ? JSON.parse(errorText) : {};
       } catch {
         errorData = { message: `HTTP error! status: ${response.status}` };
       }
