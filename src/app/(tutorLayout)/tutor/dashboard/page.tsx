@@ -64,11 +64,14 @@ export default function TutorDashboardPage() {
     }
   };
 
-  // Calculate stats
+  // Upcoming = CONFIRMED sessions that haven't ended yet (endTime > now), sorted by startTime
   const now = new Date();
-  const upcoming = bookings.filter(
-    booking => new Date(booking.startTime) >= now && booking.status === 'CONFIRMED'
-  ).sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
+  const upcoming = bookings
+    .filter(
+      (booking) =>
+        booking.status === 'CONFIRMED' && new Date(booking.endTime) > now
+    )
+    .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
 
   const completed = bookings.filter(booking => booking.status === 'COMPLETED');
   const totalEarnings = completed.reduce((sum, booking) => {
