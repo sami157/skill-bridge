@@ -6,7 +6,7 @@ import { fetchBookings, fetchMyTutorProfile, completeBooking } from '@/lib/tutor
 import { useAuth } from '@/hooks/useAuth';
 import type { Booking, TutorProfileDetail } from '@/lib/types';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, Star, TrendingUp, CheckCircle2, Loader2, User } from 'lucide-react';
+import { Calendar, Clock, Star, TrendingUp, CheckCircle2, Loader2, User, RefreshCw } from 'lucide-react';
 import { showToast } from '@/lib/toast';
 
 export default function TutorDashboardPage() {
@@ -17,8 +17,8 @@ export default function TutorDashboardPage() {
   const [completingId, setCompletingId] = useState<string | null>(null);
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (user?.id) loadData();
+  }, [user?.id]);
 
   const loadData = async () => {
     try {
@@ -100,6 +100,17 @@ export default function TutorDashboardPage() {
     });
   };
 
+  if (!user) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          <span>Loading your account...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-6">
@@ -113,6 +124,32 @@ export default function TutorDashboardPage() {
             </Button>
           </div>
         )}
+      </div>
+
+      {/* Tutor flow flowchart: Register → Create Profile → Set Availability → View Sessions → Mark Complete */}
+      <div className="mb-8 rounded-lg border bg-muted/30 p-5">
+        <h2 className="text-sm font-medium text-muted-foreground mb-4">Tutor flow</h2>
+        <div className="flex flex-col items-center gap-0">
+          <div className="rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm">Register</div>
+          <div className="text-muted-foreground">│</div>
+          <div className="text-muted-foreground">└──────────────┘</div>
+          <div className="text-muted-foreground">│</div>
+          <div className="text-muted-foreground">▼</div>
+          <Link href="/tutor/profile" className="rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-muted hover:underline">
+            Create Profile
+          </Link>
+          <div className="text-muted-foreground">│</div>
+          <div className="text-muted-foreground">▼</div>
+          <Link href="/tutor/availability" className="rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm hover:bg-muted hover:underline">
+            Set Availability
+          </Link>
+          <div className="text-muted-foreground">│</div>
+          <div className="text-muted-foreground">▼</div>
+          <div className="rounded-md border border-primary bg-primary/10 px-4 py-2 text-sm font-medium text-primary shadow-sm">View Sessions</div>
+          <div className="text-muted-foreground">│</div>
+          <div className="text-muted-foreground">▼</div>
+          <div className="rounded-md border border-input bg-background px-4 py-2 text-sm font-medium shadow-sm">Mark Complete</div>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -171,7 +208,13 @@ export default function TutorDashboardPage() {
 
       {/* Upcoming Sessions */}
       <div>
-        <h2 className="text-xl font-semibold mb-4">Upcoming Sessions</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold">Upcoming Sessions</h2>
+          <Button variant="outline" size="sm" onClick={() => loadData()} disabled={loading}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
         
         {loading ? (
           <div className="space-y-4">
@@ -245,6 +288,7 @@ export default function TutorDashboardPage() {
           <div className="border rounded-lg p-8 text-center">
             <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
             <p className="text-muted-foreground">No upcoming sessions</p>
+            <p className="text-sm text-muted-foreground mt-2">Confirmed bookings from students appear here. Try &quot;Refresh&quot; if you just received a booking.</p>
           </div>
         )}
       </div>
