@@ -76,11 +76,24 @@ const Login1 = ({
 
     try {
       const response = await signIn(email, password);
+      // Log raw response for debugging inconsistencies
+      // eslint-disable-next-line no-console
+      console.log("Login response", response);
 
-      if (response.success && response.data?.user) {
-        const user = response.data.user;
+      const user = response.user;
+      const token = response.token;
+      const success = response.success;
+
+      if (success && user && token) {
+        // Temporary token storage; prefer HttpOnly cookie when backend supports it
+        try {
+          localStorage.setItem('sb_auth_token', token);
+        } catch {
+          // ignore storage errors
+        }
+
         showToast.success(`Welcome back, ${user.name || user.email}!`);
-        
+
         // Redirect based on role
         if (user.role === 'STUDENT') {
           router.push('/dashboard');
@@ -91,8 +104,7 @@ const Login1 = ({
         } else {
           router.push('/');
         }
-        
-        // Refresh the page to update auth state
+
         router.refresh();
       } else {
         const errorMsg = response.message || 'Login failed. Please check your credentials.';

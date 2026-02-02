@@ -26,17 +26,27 @@ export interface AuthResponse {
 }
 
 /**
- * Sign in with email and password
+ * Sign in with email and password.
+ * Treat presence of { token, user } as success even if backend does not return a `success` flag.
  */
 export async function signIn(email: string, password: string) {
-  return api.post<{ user: User }>('/api/auth/sign-in/email', {
+  const res = await api.post<any>('/api/auth/sign-in/email', {
     email,
     password,
   });
+
+  // Normalize response
+  const token = (res as any).token ?? res.data?.token;
+  const user = (res as any).user ?? res.data?.user;
+  const success = !!token && !!user;
+  const message = res.message || (success ? undefined : 'Login failed');
+
+  return { success, token, user, message };
 }
 
 /**
- * Sign up with email and password
+ * Sign up with email and password.
+ * Treat presence of { token, user } as success even if backend does not return a `success` flag.
  */
 export async function signUp(data: {
   name: string;
@@ -45,13 +55,20 @@ export async function signUp(data: {
   image?: string;
   role?: 'STUDENT' | 'TUTOR';
 }) {
-  return api.post<{ user: User }>('/api/auth/sign-up/email', {
+  const res = await api.post<any>('/api/auth/sign-up/email', {
     name: data.name,
     email: data.email,
     password: data.password,
     image: data.image,
     role: data.role || 'STUDENT',
   });
+
+  const token = (res as any).token ?? res.data?.token;
+  const user = (res as any).user ?? res.data?.user;
+  const success = !!token && !!user;
+  const message = res.message || (success ? undefined : 'Registration failed');
+
+  return { success, token, user, message };
 }
 
 /**

@@ -168,8 +168,20 @@ const Register1 = ({
         role: role,
       });
 
-      if (response.success && response.data?.user) {
-        const user = response.data.user;
+      // eslint-disable-next-line no-console
+      console.log("Signup response", response);
+
+      const user = response.user;
+      const token = response.token;
+      const success = response.success;
+
+      if (success && user && token) {
+        try {
+          localStorage.setItem('sb_auth_token', token);
+        } catch {
+          // ignore storage errors
+        }
+
         showToast.success(`Account created successfully! Welcome, ${user.name || user.email}!`);
         
         // Redirect based on role
@@ -183,7 +195,6 @@ const Register1 = ({
           router.push('/');
         }
         
-        // Refresh the page to update auth state
         router.refresh();
       } else {
         const errorMsg = response.message || 'Registration failed. Please try again.';
