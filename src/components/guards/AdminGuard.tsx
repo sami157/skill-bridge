@@ -16,6 +16,7 @@ interface AdminGuardProps {
 export function AdminGuard({ children }: AdminGuardProps) {
   const { user, role, loading } = useAuth();
   const router = useRouter();
+  const normalizedRole = (role ?? user?.role)?.toUpperCase();
 
   useEffect(() => {
     if (!loading) {
@@ -23,12 +24,12 @@ export function AdminGuard({ children }: AdminGuardProps) {
         router.push('/login');
         return;
       }
-      if (role !== 'ADMIN') {
+      if (normalizedRole !== 'ADMIN') {
         router.push('/');
         return;
       }
     }
-  }, [user, role, loading, router]);
+  }, [user, normalizedRole, loading, router]);
 
   if (loading) {
     return (
@@ -38,7 +39,7 @@ export function AdminGuard({ children }: AdminGuardProps) {
     );
   }
 
-  if (!user || role !== 'ADMIN') {
+  if (!user || normalizedRole !== 'ADMIN') {
     return null;
   }
 

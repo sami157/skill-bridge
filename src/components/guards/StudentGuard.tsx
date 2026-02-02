@@ -16,6 +16,7 @@ interface StudentGuardProps {
 export function StudentGuard({ children }: StudentGuardProps) {
   const { user, role, loading } = useAuth();
   const router = useRouter();
+  const normalizedRole = (role ?? user?.role)?.toUpperCase();
 
   useEffect(() => {
     if (!loading) {
@@ -23,12 +24,12 @@ export function StudentGuard({ children }: StudentGuardProps) {
         router.push('/login');
         return;
       }
-      if (role !== 'STUDENT') {
+      if (normalizedRole !== 'STUDENT') {
         router.push('/');
         return;
       }
     }
-  }, [user, role, loading, router]);
+  }, [user, normalizedRole, loading, router]);
 
   if (loading) {
     return (
@@ -38,7 +39,7 @@ export function StudentGuard({ children }: StudentGuardProps) {
     );
   }
 
-  if (!user || role !== 'STUDENT') {
+  if (!user || normalizedRole !== 'STUDENT') {
     return null;
   }
 

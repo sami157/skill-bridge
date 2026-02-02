@@ -16,6 +16,7 @@ interface TutorGuardProps {
 export function TutorGuard({ children }: TutorGuardProps) {
   const { user, role, loading } = useAuth();
   const router = useRouter();
+  const normalizedRole = (role ?? user?.role)?.toUpperCase();
 
   useEffect(() => {
     if (!loading) {
@@ -23,12 +24,12 @@ export function TutorGuard({ children }: TutorGuardProps) {
         router.push('/login');
         return;
       }
-      if (role !== 'TUTOR') {
+      if (normalizedRole !== 'TUTOR') {
         router.push('/');
         return;
       }
     }
-  }, [user, role, loading, router]);
+  }, [user, normalizedRole, loading, router]);
 
   if (loading) {
     return (
@@ -38,7 +39,7 @@ export function TutorGuard({ children }: TutorGuardProps) {
     );
   }
 
-  if (!user || role !== 'TUTOR') {
+  if (!user || normalizedRole !== 'TUTOR') {
     return null;
   }
 
