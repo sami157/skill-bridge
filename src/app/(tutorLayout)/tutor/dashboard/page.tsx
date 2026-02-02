@@ -31,7 +31,7 @@ export default function TutorDashboardPage() {
         setTutorProfile(myProfileResponse.data);
       }
       if (bookingsResponse.success) {
-        setBookings(bookingsResponse.data);
+        setBookings(bookingsResponse.data ?? []);
       }
     } catch (err) {
       console.error('Failed to load data:', err);
@@ -64,7 +64,7 @@ export default function TutorDashboardPage() {
     }
   };
 
-  // Upcoming = CONFIRMED sessions that haven't ended yet (endTime > now), sorted by startTime
+  // Upcoming Sessions = tutor's bookings (from GET /tutors/me/bookings) that are CONFIRMED and not yet ended
   const now = new Date();
   const upcoming = bookings
     .filter(
