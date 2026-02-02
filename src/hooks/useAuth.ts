@@ -1,11 +1,18 @@
 'use client';
 
-import { useSession, signOut } from 'next-auth/react';
-import type { User, Role } from '@/lib/auth';
-import { clearAuthToken } from '@/lib/api';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import {
+  getAuthToken,
+  getAuthUser,
+  clearAuth,
+  onAuthChange,
+  type AuthUser,
+} from '@/lib/auth-storage';
+import type { Role } from '@/lib/auth';
 
 export interface UseAuthReturn {
-  user: User | null;
+  user: AuthUser | null;
   role: Role | null;
   loading: boolean;
   error: string | null;
@@ -14,42 +21,41 @@ export interface UseAuthReturn {
 }
 
 /**
- * Auth state from NextAuth session.
+ * Auth state from localStorage (token-based). Unified with login API.
  */
 export function useAuth(): UseAuthReturn {
-  const { data: session, status, update } = useSession();
-  const loading = status === 'loading';
-  const error = status === 'unauthenticated' ? null : null;
+  const router = useRouter();
+  const [auth, setAuth] = useState<{ user: AuthUser | null; token: string | null } | null>(null);
 
-  const user: User | null = session?.user
-    ? {
-        id: (session.user as { id?: string }).id ?? '',
-        name: session.user.name ?? '',
-        email: session.user.email ?? '',
-        image: session.user.image ?? undefined,
-        role: ((session.user as { role?: string }).role ?? 'STUDENT') as Role,
-        active: true,
-        createdAt: '',
-        updatedAt: '',
-      }
-    : null;
+  const syncAuth = () => {
+    setAuth({ user: getAuthUser(), token: getAuthToken() });
+  };
 
-  const role: Role | null = user ? (user.role as Role) : null;
+  useEffect(() => {
+    syncAuth();
+    return onAuthChange(syncAuth);
+  }, []);
+
+  const loading = auth === null;
+  const user = auth?.user ?? null;
+  const role: Role | null = user?.role ? (user.role as Role) : null;
 
   const refetch = async () => {
-    await update();
+    syncAuth();
   };
 
   const logout = async () => {
-    clearAuthToken();
-    await signOut({ callbackUrl: '/' });
+    clearAuth();
+    setAuth({ user: null, token: null });
+    router.push('/');
+    router.refresh();
   };
 
   return {
     user,
     role,
     loading,
-    error,
+    error: null,
     refetch,
     logout,
   };

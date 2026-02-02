@@ -2,7 +2,6 @@
 
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { signIn, getSession } from 'next-auth/react';
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +9,7 @@ import Link from "next/link";
 import { showToast } from "@/lib/toast";
 import { Eye, EyeOff } from "lucide-react";
 import { BASE_URL } from "@/lib/api";
+import { setAuth, type AuthUser } from "@/lib/auth-storage";
 
 interface Login1Props {
   heading?: string;
@@ -84,7 +84,7 @@ const Login1 = ({
       const text = await verifyRes.text();
       let data: {
         success?: boolean;
-        user?: { id: string; name: string; email: string; role: string; image?: string | null; emailVerified?: boolean };
+        user?: AuthUser;
         token?: string;
         message?: string;
       } = {};
@@ -93,36 +93,12 @@ const Login1 = ({
       } catch {
         data = {};
       }
-      if (data?.success) {
-        console.log("[Login] verify-credentials response:", { success: data.success, user: data.user, token: data.token });
-      }
-      if (!data?.success || !data?.token) {
-        setError(typeof data?.message === "string" ? data.message : "Invalid email or password");
-        showToast.error(typeof data?.message === "string" ? data.message : "Invalid email or password");
-        return;
-      }
-      let result;
-      try {
-        result = await signIn("credentials", {
-          token: data.token,
-          redirect: false,
-        });
-      } catch (signInErr) {
-        const msg = signInErr instanceof Error ? signInErr.message : "Sign-in failed";
-        if (msg.includes("json") || msg.includes("JSON")) {
-          setError("Session error. Ensure NEXTAUTH_SECRET matches on frontend and backend.");
-          showToast.error("Session error. Check NEXTAUTH_SECRET.");
-        } else {
-          setError(msg);
-          showToast.error(msg);
-        }
-        return;
-      }
 
-      if (result?.ok && result?.error === undefined) {
+      if (data.success === true && data.token && data.user) {
+        setAuth(data.token, data.user);
+        setError(null);
         showToast.success("Welcome back!");
-        const session = await getSession();
-        const role = (session?.user as { role?: string })?.role;
+        const role = data.user.role;
         if (role === "ADMIN") {
           router.push("/admin");
         } else if (role === "TUTOR") {
@@ -133,14 +109,12 @@ const Login1 = ({
           router.push("/");
         }
         router.refresh();
-      } else {
-        const errorMsg =
-          typeof result?.error === "string"
-            ? result.error
-            : "Login failed. Please check your credentials.";
-        setError(errorMsg);
-        showToast.error(errorMsg);
+        return;
       }
+
+      const backendMessage = typeof data?.message === "string" ? data.message : "Invalid email or password";
+      setError(backendMessage);
+      showToast.error(backendMessage);
     } catch (err) {
       const errorMsg =
         err instanceof Error ? err.message : "An unexpected error occurred";
@@ -228,7 +202,7 @@ const Login1 = ({
             <p>{signupText}</p>
             <Link
               href={signupUrl}
-              className="font-medium text-primary hover:underline"
+              className="font-medium text-primary hover-underline"
             >
               Register
             </Link>

@@ -1,8 +1,8 @@
 /**
- * Auth helpers using NextAuth.js
- * - signIn / signOut via NextAuth
+ * Auth helpers.
  * - signUp calls backend register
- * - getCurrentUser calls backend /users/profile (session cookie sent)
+ * - getCurrentUser calls backend /users/profile (Authorization: Bearer token)
+ * - Token-based auth: getAuthToken / getAuthUser / setAuth / clearAuth in auth-storage.ts
  */
 
 import { api } from "./api";

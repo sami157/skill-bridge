@@ -1,8 +1,10 @@
 /**
  * Central API client for Skill Bridge frontend.
- * All requests go to BACKEND (BASE_URL). In browser, we add Authorization: Bearer
- * by fetching the session token from /api/auth/token (same-origin).
+ * All requests go to BACKEND (BASE_URL). In browser, we add Authorization: Bearer <token>
+ * using getAuthToken() from auth-storage (localStorage).
  */
+
+import { getAuthToken } from "./auth-storage";
 
 export const BASE_URL =
   (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_API_URL) ||
@@ -19,27 +21,6 @@ const buildUrl = (base: string, path: string) => {
 function getUrl(path: string): string {
   const p = path.startsWith('/') ? path : `/${path}`;
   return buildUrl(BASE_URL, p);
-}
-
-let cachedToken: string | null = null;
-
-async function getAuthToken(): Promise<string | null> {
-  if (cachedToken) return cachedToken;
-  try {
-    const res = await fetch('/api/auth/token', { credentials: 'include' });
-    const text = await res.text();
-    if (!text?.trim()) return null;
-    const data = JSON.parse(text) as { token?: string | null };
-    cachedToken = data?.token ?? null;
-    return cachedToken;
-  } catch {
-    return null;
-  }
-}
-
-/** Call after signOut so the next request fetches a fresh token. */
-export function clearAuthToken(): void {
-  cachedToken = null;
 }
 
 export interface ApiResponse<T> {
@@ -63,8 +44,8 @@ export async function apiGet<T>(path: string): Promise<ApiResponse<T>> {
   const url = getUrl(path);
   const headers: HeadersInit = { 'Content-Type': 'application/json' };
   if (isBrowser) {
-    const token = await getAuthToken();
-    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const token = getAuthToken();
+    if (token) (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
   }
   try {
     const response = await fetch(url, {
@@ -138,7 +119,7 @@ class ApiClient {
       'Accept': 'application/json',
     };
     if (isBrowser) {
-      const token = await getAuthToken();
+      const token = getAuthToken();
       if (token) (defaultHeaders as Record<string, string>)['Authorization'] = `Bearer ${token}`;
     }
     const config: RequestInit = {

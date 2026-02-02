@@ -2,8 +2,8 @@
 
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { signIn, getSession } from 'next-auth/react';
 import { cn } from "@/lib/utils";
+import { setAuth, type AuthUser } from "@/lib/auth-storage";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
@@ -175,21 +175,16 @@ const Register1 = ({
           body: JSON.stringify({ email: email.trim(), password }),
         });
         const verifyText = await verifyRes.text();
-        let verifyData: { success?: boolean; token?: string } = {};
+        let verifyData: { success?: boolean; token?: string; user?: AuthUser } = {};
         try {
           verifyData = verifyText?.trim() ? JSON.parse(verifyText) : {};
         } catch {
           verifyData = {};
         }
-        const token = verifyData?.success ? verifyData.token : null;
-        const signInResult = token
-          ? await signIn("credentials", { token, redirect: false })
-          : { ok: false as const, error: "Could not sign in" };
-
-        if (signInResult?.ok && !signInResult?.error) {
+        if (verifyData?.success && verifyData?.token && verifyData?.user) {
+          setAuth(verifyData.token, verifyData.user);
           showToast.success(`Account created successfully! Welcome, ${name.trim()}!`);
-          const session = await getSession();
-          const userRole = (session?.user as { role?: string })?.role;
+          const userRole = verifyData.user.role;
           if (userRole === 'ADMIN') {
             router.push('/admin');
           } else if (userRole === 'TUTOR') {
@@ -197,10 +192,10 @@ const Register1 = ({
           } else {
             router.push('/dashboard');
           }
+          router.refresh();
         } else {
           router.push('/login');
         }
-        router.refresh();
       } else {
         const errorMsg = response.message || 'Registration failed. Please try again.';
         setError(errorMsg);
