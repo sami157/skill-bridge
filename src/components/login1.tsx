@@ -2,11 +2,11 @@
 
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import { signIn, getSession } from 'next-auth/react';
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import { signIn, getCurrentUser } from "@/lib/auth";
 import { showToast } from "@/lib/toast";
 import { Eye, EyeOff } from "lucide-react";
 
@@ -75,41 +75,26 @@ const Login1 = ({
     setLoading(true);
 
     try {
-      const response = await signIn(email, password);
-      const success = response.success;
+      const result = await signIn('credentials', {
+        email: email.trim(),
+        password,
+        redirect: false,
+      });
 
-      if (success) {
-        // Fetch full user with role from backend (session cookie is now set)
-        const { user } = await getCurrentUser();
-        const fullUser = user as { name?: string; email?: string; role?: string } | null;
-
-        if (fullUser) {
-          try {
-            localStorage.setItem('sb_auth_user', JSON.stringify(fullUser));
-          } catch {
-            // ignore
-          }
-          window.dispatchEvent(new Event('sb-auth-updated'));
-
-          showToast.success(`Welcome back, ${fullUser.name || fullUser.email}!`);
-
-          if (fullUser.role === 'STUDENT') {
-            router.push('/dashboard');
-          } else if (fullUser.role === 'TUTOR') {
-            router.push('/tutor/dashboard');
-          } else if (fullUser.role === 'ADMIN') {
-            router.push('/admin');
-          } else {
-            router.push('/');
-          }
+      if (result?.ok && result?.error === undefined) {
+        showToast.success('Welcome back!');
+        const session = await getSession();
+        const role = (session?.user as { role?: string })?.role;
+        if (role === 'ADMIN') {
+          router.push('/admin');
+        } else if (role === 'TUTOR') {
+          router.push('/tutor/dashboard');
         } else {
-          // Session set but profile fetch failed - still redirect to home
-          router.push('/');
+          router.push('/dashboard');
         }
-
         router.refresh();
       } else {
-        const errorMsg = response.message || 'Login failed. Please check your credentials.';
+        const errorMsg = result?.error ?? 'Login failed. Please check your credentials.';
         setError(errorMsg);
         showToast.error(errorMsg);
       }

@@ -2,11 +2,12 @@
 
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import { signIn, getSession } from 'next-auth/react';
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import { signUp, getCurrentUser } from "@/lib/auth";
+import { signUp } from "@/lib/auth";
 import { showToast } from "@/lib/toast";
 import { Eye, EyeOff } from "lucide-react";
 
@@ -104,7 +105,6 @@ const Register1 = ({
         break;
       case 'password':
         setPassword(value);
-        // Also validate confirm password if it's already filled
         if (confirmPassword) {
           const confirmError = validateField('confirmPassword', confirmPassword);
           setFieldErrors((prev) => {
@@ -139,7 +139,6 @@ const Register1 = ({
     setError(null);
     setFieldErrors({});
 
-    // Validate all fields
     const nameError = validateField('name', name);
     const emailError = validateField('email', email);
     const passwordError = validateField('password', password);
@@ -168,35 +167,27 @@ const Register1 = ({
         role: role,
       });
 
-      const success = response.success;
+      if (response.success) {
+        const signInResult = await signIn('credentials', {
+          email: email.trim(),
+          password,
+          redirect: false,
+        });
 
-      if (success) {
-        const { user } = await getCurrentUser();
-        const fullUser = user as { name?: string; email?: string; role?: string } | null;
-
-        if (fullUser) {
-          try {
-            localStorage.setItem('sb_auth_user', JSON.stringify(fullUser));
-          } catch {
-            // ignore storage errors
-          }
-          window.dispatchEvent(new Event('sb-auth-updated'));
-
-          showToast.success(`Account created successfully! Welcome, ${fullUser.name || fullUser.email}!`);
-
-          if (fullUser.role === 'STUDENT') {
-            router.push('/dashboard');
-          } else if (fullUser.role === 'TUTOR') {
-            router.push('/tutor/dashboard');
-          } else if (fullUser.role === 'ADMIN') {
+        if (signInResult?.ok && signInResult?.error === undefined) {
+          showToast.success(`Account created successfully! Welcome, ${name.trim()}!`);
+          const session = await getSession();
+          const userRole = (session?.user as { role?: string })?.role;
+          if (userRole === 'ADMIN') {
             router.push('/admin');
+          } else if (userRole === 'TUTOR') {
+            router.push('/tutor/dashboard');
           } else {
-            router.push('/');
+            router.push('/dashboard');
           }
         } else {
-          router.push('/');
+          router.push('/login');
         }
-
         router.refresh();
       } else {
         const errorMsg = response.message || 'Registration failed. Please try again.';

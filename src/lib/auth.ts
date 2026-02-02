@@ -1,11 +1,13 @@
 /**
- * Auth helpers for managing authentication state
- * Better Auth uses cookies for session management, so we primarily work with API calls
+ * Auth helpers using NextAuth.js
+ * - signIn / signOut via NextAuth
+ * - signUp calls backend register
+ * - getCurrentUser calls backend /users/profile (session cookie sent)
  */
 
-import { api } from './api';
+import { api } from "./api";
 
-export type Role = 'STUDENT' | 'TUTOR' | 'ADMIN';
+export type Role = "STUDENT" | "TUTOR" | "ADMIN";
 
 export interface User {
   id: string;
@@ -26,73 +28,42 @@ export interface AuthResponse {
 }
 
 /**
- * Sign in with email and password.
- * Better Auth returns { user, session } on success. We treat presence of user as success.
- */
-export async function signIn(email: string, password: string) {
-  const res = await api.post<Record<string, unknown>>('/api/auth/sign-in/email', {
-    email,
-    password,
-  });
-
-  const user = (res as { user?: User; data?: { user?: User } }).user ?? res.data?.user;
-  const success = !!user || res.success === true;
-  const message = (res as { message?: string }).message || (success ? undefined : 'Login failed');
-
-  return { success, user: user ?? null, message };
-}
-
-/**
- * Sign up with email and password.
- * Better Auth returns { user, session } on success. Role is passed and validated on backend.
+ * Sign up: create user on backend, then caller should sign in with NextAuth.
  */
 export async function signUp(data: {
   name: string;
   email: string;
   password: string;
   image?: string;
-  role?: 'STUDENT' | 'TUTOR';
+  role?: "STUDENT" | "TUTOR";
 }) {
-  const res = await api.post<Record<string, unknown>>('/api/auth/sign-up/email', {
-    name: data.name,
-    email: data.email,
-    password: data.password,
-    image: data.image,
-    role: data.role || 'STUDENT',
-  });
-
-  const user = (res as { user?: User; data?: { user?: User } }).user ?? res.data?.user;
-  const success = !!user || res.success === true;
-  const message = (res as { message?: string }).message || (success ? undefined : 'Registration failed');
-
-  return { success, user: user ?? null, message };
-}
-
-/**
- * Sign out current session
- */
-export async function signOut() {
-  try {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('sb_auth_user');
+  const res = await api.post<{ success?: boolean; user?: User; message?: string }>(
+    "/api/auth/register",
+    {
+      name: data.name,
+      email: data.email,
+      password: data.password,
+      image: data.image,
+      role: data.role ?? "STUDENT",
     }
-  } catch {
-    // ignore
-  }
-  return api.post('/api/auth/sign-out');
+  );
+
+  const user = (res as { user?: User }).user ?? null;
+  const success = !!res.success && !!user;
+  const message = (res as { message?: string }).message || (success ? undefined : "Registration failed");
+
+  return { success, user, message };
 }
 
 /**
- * Get current user profile (used to check auth status)
- * Backend returns { success: true, data: user }. Requires session cookie.
+ * Get current user from backend (session cookie or JWT sent with request).
  */
 export async function getCurrentUser(): Promise<{ user: User | null; role: Role | null }> {
-  const response = await api.get<User>('/users/profile');
-
+  const response = await api.get<User>("/users/profile");
   const raw = response as { success?: boolean; data?: User; user?: User };
   const user = raw.data ?? raw.user ?? null;
 
-  if (user && typeof user === 'object' && user.id) {
+  if (user && typeof user === "object" && user.id) {
     return {
       user: user as User,
       role: (user as User).role as Role,

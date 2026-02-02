@@ -3,8 +3,6 @@
 import { TutorGuard } from '@/components/guards/TutorGuard';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
-import { signOut } from '@/lib/auth';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 
 export default function TutorLayout({
@@ -12,12 +10,10 @@ export default function TutorLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user } = useAuth();
-  const router = useRouter();
+  const { user, logout } = useAuth();
 
   const handleSignOut = async () => {
-    await signOut();
-    router.push('/');
+    await logout();
   };
 
   return (

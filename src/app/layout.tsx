@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
+import { SessionProvider } from "@/components/providers/SessionProvider";
 import { Toaster } from "react-hot-toast";
 
 const geistSans = Geist({
@@ -33,8 +34,9 @@ export default function RootLayout({
                     enableSystem
                     disableTransitionOnChange
                 >
-                    {children}
-                    <Toaster
+                    <SessionProvider>
+                        {children}
+                        <Toaster
                         position="top-right"
                         toastOptions={{
                             duration: 4000,
@@ -57,6 +59,7 @@ export default function RootLayout({
                             },
                         }}
                     />
+                    </SessionProvider>
                 </ThemeProvider>
             </body>
         </html>

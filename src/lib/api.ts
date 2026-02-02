@@ -4,7 +4,7 @@
  * 
  * Backend routes:
  * - /tutors, /categories, /subjects, /bookings, /users (no /api prefix)
- * - /api/auth/* (Better Auth routes with /api prefix)
+ * - /api/auth/* (register, verify-credentials)
  */
 
 // Backend base URL: use env for local dev, fallback to production
