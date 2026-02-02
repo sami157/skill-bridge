@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { showToast } from "@/lib/toast";
 import { Eye, EyeOff } from "lucide-react";
+import { BASE_URL } from "@/lib/api";
 
 interface Login1Props {
   heading?: string;
@@ -75,7 +76,7 @@ const Login1 = ({
     setLoading(true);
 
     try {
-      const verifyRes = await fetch("/api/proxy/api/auth/verify-credentials", {
+      const verifyRes = await fetch(`${BASE_URL}/api/auth/verify-credentials`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim(), password }),

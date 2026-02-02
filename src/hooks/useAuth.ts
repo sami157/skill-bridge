@@ -2,6 +2,7 @@
 
 import { useSession, signOut } from 'next-auth/react';
 import type { User, Role } from '@/lib/auth';
+import { clearAuthToken } from '@/lib/api';
 
 export interface UseAuthReturn {
   user: User | null;
@@ -40,6 +41,7 @@ export function useAuth(): UseAuthReturn {
   };
 
   const logout = async () => {
+    clearAuthToken();
     await signOut({ callbackUrl: '/' });
   };
 

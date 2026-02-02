@@ -10,6 +10,7 @@ import Link from "next/link";
 import { signUp } from "@/lib/auth";
 import { showToast } from "@/lib/toast";
 import { Eye, EyeOff } from "lucide-react";
+import { BASE_URL } from "@/lib/api";
 
 interface Register1Props {
   heading?: string;
@@ -168,7 +169,7 @@ const Register1 = ({
       });
 
       if (response.success) {
-        const verifyRes = await fetch("/api/proxy/api/auth/verify-credentials", {
+        const verifyRes = await fetch(`${BASE_URL}/api/auth/verify-credentials`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email: email.trim(), password }),

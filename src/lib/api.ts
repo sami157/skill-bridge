@@ -1,22 +1,14 @@
 /**
- * Central API client for Skill Bridge frontend
- * Uses BASE_URL from NEXT_PUBLIC_API_URL environment variable
- * 
- * Backend routes:
- * - /tutors, /categories, /subjects, /bookings, /users (no /api prefix)
- * - /api/auth/* (register, verify-credentials)
- * In browser, requests go to same-origin /api/proxy/* so NextAuth session cookie
- * is forwarded to the backend as Authorization: Bearer.
+ * Central API client for Skill Bridge frontend.
+ * All requests go to BACKEND (BASE_URL). In browser, we add Authorization: Bearer
+ * by fetching the session token from /api/auth/token (same-origin).
  */
 
-// Backend base URL (used by proxy server-side; client uses /api/proxy)
 export const BASE_URL =
   (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_API_URL) ||
   'https://skill-bridge-server-eight.vercel.app';
 
-// In browser, use same-origin proxy so NextAuth session cookie is forwarded as Bearer token to backend
 const isBrowser = typeof window !== 'undefined';
-const PROXY_PREFIX = '/api/proxy';
 
 const buildUrl = (base: string, path: string) => {
   const cleanBase = base.replace(/\/$/, '');
@@ -26,10 +18,26 @@ const buildUrl = (base: string, path: string) => {
 
 function getUrl(path: string): string {
   const p = path.startsWith('/') ? path : `/${path}`;
-  if (isBrowser) {
-    return `${PROXY_PREFIX}${p}`;
+  return buildUrl(BASE_URL, p);
+}
+
+let cachedToken: string | null = null;
+
+async function getAuthToken(): Promise<string | null> {
+  if (cachedToken) return cachedToken;
+  try {
+    const res = await fetch('/api/auth/token', { credentials: 'include' });
+    const data = await res.json();
+    cachedToken = data?.token ?? null;
+    return cachedToken;
+  } catch {
+    return null;
   }
-  return buildUrl(BASE_URL, path);
+}
+
+/** Call after signOut so the next request fetches a fresh token. */
+export function clearAuthToken(): void {
+  cachedToken = null;
 }
 
 export interface ApiResponse<T> {
@@ -51,14 +59,16 @@ export interface ApiError {
  */
 export async function apiGet<T>(path: string): Promise<ApiResponse<T>> {
   const url = getUrl(path);
-  
+  const headers: HeadersInit = { 'Content-Type': 'application/json' };
+  if (isBrowser) {
+    const token = await getAuthToken();
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+  }
   try {
     const response = await fetch(url, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include', // Important for cookie-based auth
+      headers,
+      credentials: 'include',
     });
 
     if (!response.ok) {
@@ -120,21 +130,22 @@ class ApiClient {
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
     const url = getUrl(endpoint);
-
     const defaultHeaders: HeadersInit = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
     };
-
-    // Include credentials so NextAuth cookie is sent to our proxy (same-origin)
+    if (isBrowser) {
+      const token = await getAuthToken();
+      if (token) (defaultHeaders as Record<string, string>)['Authorization'] = `Bearer ${token}`;
+    }
     const config: RequestInit = {
       ...options,
       headers: {
         ...defaultHeaders,
         ...options.headers,
       },
-      credentials: 'include', // Important for cookie-based auth
-      mode: 'cors', // Explicitly set CORS mode
+      credentials: 'include',
+      mode: 'cors',
     };
 
     try {
