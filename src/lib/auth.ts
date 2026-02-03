@@ -72,3 +72,24 @@ export async function getCurrentUser(): Promise<{ user: User | null; role: Role 
 
   return { user: null, role: null };
 }
+
+/**
+ * Update current user profile (name, phone, image). Returns the updated user.
+ */
+export async function updateProfile(data: {
+  name: string;
+  phone?: string;
+  image?: string;
+}): Promise<{ success: boolean; user?: User; message?: string }> {
+  const res = await api.put<User>("/users/profile", {
+    name: data.name.trim(),
+    phone: data.phone?.trim() ?? "",
+    image: data.image?.trim() ?? "",
+  });
+  const raw = res as { success?: boolean; data?: User; message?: string };
+  return {
+    success: !!raw.success,
+    user: raw.data ?? undefined,
+    message: raw.message,
+  };
+}
