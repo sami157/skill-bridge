@@ -109,13 +109,18 @@ function TutorsPageContent() {
     setDisplayCount(prev => prev + 12);
   };
 
-  // Handle search with debounce — syncs search term to filters and refetches
+  // Debounce search: sync full form state to filters so API refetches with search + other filters
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (localFilters.search !== filters.search) {
+      const searchVal = localFilters.search?.trim() || undefined;
+      if (searchVal !== filters.search) {
         const newFilters: TutorsFilters = {
-          ...filters,
-          search: localFilters.search?.trim() || undefined,
+          categoryId: localFilters.categoryId || undefined,
+          subjectId: localFilters.subjectId || undefined,
+          minRating: localFilters.minRating ? parseFloat(localFilters.minRating) : undefined,
+          maxPrice: localFilters.maxPrice ? parseFloat(localFilters.maxPrice) : undefined,
+          sortBy: (localFilters.sortBy as TutorsFilters['sortBy']) || undefined,
+          search: searchVal,
         };
         setFilters(newFilters);
         updateURL(newFilters);
