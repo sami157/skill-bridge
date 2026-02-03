@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { getCurrentUser, updateProfile, type User } from '@/lib/auth';
+import { getCurrentUser, updateProfile, type User as AuthUser } from '@/lib/auth';
 import { getAuthToken, setAuth } from '@/lib/auth-storage';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,7 +11,7 @@ import { showToast } from '@/lib/toast';
 
 export default function StudentProfilePage() {
   const { user: authUser, refetch } = useAuth();
-  const [profile, setProfile] = useState<User | null>(null);
+  const [profile, setProfile] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
