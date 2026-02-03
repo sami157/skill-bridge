@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, Suspense } from 'react';
+import { useState, useEffect, useCallback, useMemo, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { fetchTutors, fetchCategories } from '@/lib/tutors';
@@ -9,13 +9,24 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Star, Search, Loader2 } from 'lucide-react';
 
+function matchesSearch(tutor: TutorProfile, query: string): boolean {
+  if (!query) return true;
+  const q = query.toLowerCase().trim();
+  const name = tutor?.user?.name ?? '';
+  if (name.toLowerCase().includes(q)) return true;
+  const bio = tutor?.bio ?? '';
+  if (bio.toLowerCase().includes(q)) return true;
+  const subjectNames = (tutor?.subjects ?? []).map((s) => (s?.name ?? '')).join(' ');
+  if (subjectNames.toLowerCase().includes(q)) return true;
+  return false;
+}
+
 function TutorsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
   // State
   const [allTutors, setAllTutors] = useState<TutorProfile[]>([]);
-  const [displayedTutors, setDisplayedTutors] = useState<TutorProfile[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -73,18 +84,17 @@ function TutorsPageContent() {
     loadCategories();
   }, []);
 
-  // Fetch tutors when filters change
+  // Fetch tutors when backend filters change (never send search to backend)
   const loadTutors = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
+      const apiFilters = { ...filters, search: undefined };
+      const response = await fetchTutors(apiFilters);
 
-      const response = await fetchTutors(filters);
-      
       if (response.success && response.data) {
         setAllTutors(response.data);
-        setDisplayedTutors(response.data.slice(0, displayCount));
-        setDisplayCount(12); // Reset display count when filters change
+        setDisplayCount(12);
       } else {
         setError(response.message || 'Failed to load tutors');
       }
@@ -95,40 +105,33 @@ function TutorsPageContent() {
     }
   }, [filters]);
 
-  // Load tutors when filters change
   useEffect(() => {
     loadTutors();
   }, [loadTutors]);
 
-  // Update displayed tutors when allTutors or displayCount changes
-  useEffect(() => {
-    setDisplayedTutors(allTutors.slice(0, displayCount));
-  }, [allTutors, displayCount]);
+  // Frontend-only search: filter already-fetched tutors by name, bio, subject names (case-insensitive)
+  const filteredTutors = useMemo(() => {
+    const query = localFilters.search?.trim() ?? '';
+    if (!query) return allTutors;
+    return allTutors.filter((tutor) => matchesSearch(tutor, query));
+  }, [allTutors, localFilters.search]);
+
+  // Pagination applies to filtered list
+  const displayedTutors = useMemo(
+    () => filteredTutors.slice(0, displayCount),
+    [filteredTutors, displayCount]
+  );
 
   const handleLoadMore = () => {
-    setDisplayCount(prev => prev + 12);
+    setDisplayCount((prev) => prev + 12);
   };
 
-  // Debounce search: sync full form state to filters so API refetches with search + other filters
+  // When search text changes: reset pagination and update URL (no backend fetch)
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const searchVal = localFilters.search?.trim() || undefined;
-      if (searchVal !== filters.search) {
-        const newFilters: TutorsFilters = {
-          categoryId: localFilters.categoryId || undefined,
-          subjectId: localFilters.subjectId || undefined,
-          minRating: localFilters.minRating ? parseFloat(localFilters.minRating) : undefined,
-          maxPrice: localFilters.maxPrice ? parseFloat(localFilters.maxPrice) : undefined,
-          sortBy: (localFilters.sortBy as TutorsFilters['sortBy']) || undefined,
-          search: searchVal,
-        };
-        setFilters(newFilters);
-        updateURL(newFilters);
-      }
-    }, 400);
-
-    return () => clearTimeout(timer);
-  }, [localFilters.search, filters.search]);
+    setDisplayCount(12);
+    const searchVal = localFilters.search?.trim() || undefined;
+    updateURL({ ...filters, search: searchVal });
+  }, [localFilters.search]);
 
   const handleFilterChange = (key: keyof typeof localFilters, value: string) => {
     setLocalFilters(prev => ({ ...prev, [key]: value }));
@@ -387,14 +390,14 @@ function TutorsPageContent() {
                 ))}
               </div>
 
-              {/* Load More Button - Client-side pagination */}
-              {allTutors.length > displayedTutors.length && (
+              {/* Load More Button - Pagination on filtered list */}
+              {filteredTutors.length > displayedTutors.length && (
                 <div className="text-center">
                   <Button
                     variant="outline"
                     onClick={handleLoadMore}
                   >
-                    Load More ({allTutors.length - displayedTutors.length} remaining)
+                    Load More ({filteredTutors.length - displayedTutors.length} remaining)
                   </Button>
                 </div>
               )}
