@@ -1,12 +1,19 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createCategory, createSubject } from '@/lib/admin';
+import {
+  createCategory,
+  createSubject,
+  updateCategory,
+  deleteCategory,
+  updateSubject,
+  deleteSubject,
+} from '@/lib/admin';
 import { fetchCategories as fetchCategoriesLib } from '@/lib/tutors';
 import type { Category } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Plus, Search, BookOpen, Loader2 } from 'lucide-react';
+import { Plus, Search, BookOpen, Loader2, Pencil, Trash2 } from 'lucide-react';
 
 export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -24,6 +31,18 @@ export default function AdminCategoriesPage() {
   const [showCreateSubject, setShowCreateSubject] = useState<string | null>(null);
   const [newSubjectName, setNewSubjectName] = useState('');
   const [creatingSubject, setCreatingSubject] = useState(false);
+
+  // Edit category
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  const [editCategoryName, setEditCategoryName] = useState('');
+  const [updatingCategory, setUpdatingCategory] = useState(false);
+  const [deletingCategoryId, setDeletingCategoryId] = useState<string | null>(null);
+
+  // Edit subject
+  const [editingSubjectId, setEditingSubjectId] = useState<string | null>(null);
+  const [editSubjectName, setEditSubjectName] = useState('');
+  const [updatingSubject, setUpdatingSubject] = useState(false);
+  const [deletingSubjectId, setDeletingSubjectId] = useState<string | null>(null);
 
   useEffect(() => {
     loadCategories();
@@ -112,6 +131,88 @@ export default function AdminCategoriesPage() {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setCreatingSubject(false);
+    }
+  };
+
+  const handleUpdateCategory = async (id: string) => {
+    if (!editCategoryName.trim()) {
+      setError('Category name is required');
+      return;
+    }
+    try {
+      setUpdatingCategory(true);
+      setError(null);
+      const response = await updateCategory(id, editCategoryName.trim());
+      if (response.success) {
+        setEditingCategoryId(null);
+        setEditCategoryName('');
+        await loadCategories();
+      } else {
+        setError(response.message || 'Failed to update category');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update category');
+    } finally {
+      setUpdatingCategory(false);
+    }
+  };
+
+  const handleDeleteCategory = async (id: string) => {
+    if (!confirm('Delete this category? It must have no subjects.')) return;
+    try {
+      setDeletingCategoryId(id);
+      setError(null);
+      const response = await deleteCategory(id);
+      if (response.success) {
+        await loadCategories();
+      } else {
+        setError(response.message || 'Failed to delete category');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete category');
+    } finally {
+      setDeletingCategoryId(null);
+    }
+  };
+
+  const handleUpdateSubject = async (subjectId: string) => {
+    if (!editSubjectName.trim()) {
+      setError('Subject name is required');
+      return;
+    }
+    try {
+      setUpdatingSubject(true);
+      setError(null);
+      const response = await updateSubject(subjectId, { name: editSubjectName.trim() });
+      if (response.success) {
+        setEditingSubjectId(null);
+        setEditSubjectName('');
+        await loadCategories();
+      } else {
+        setError(response.message || 'Failed to update subject');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update subject');
+    } finally {
+      setUpdatingSubject(false);
+    }
+  };
+
+  const handleDeleteSubject = async (subjectId: string) => {
+    if (!confirm('Delete this subject? Tutors using it will lose this subject.')) return;
+    try {
+      setDeletingSubjectId(subjectId);
+      setError(null);
+      const response = await deleteSubject(subjectId);
+      if (response.success) {
+        await loadCategories();
+      } else {
+        setError(response.message || 'Failed to delete subject');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete subject');
+    } finally {
+      setDeletingSubjectId(null);
     }
   };
 
@@ -214,15 +315,71 @@ export default function AdminCategoriesPage() {
           {filteredCategories.map((category) => (
             <div key={category.id} className="border rounded-lg p-6">
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold">{category.name}</h2>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowCreateSubject(showCreateSubject === category.id ? null : category.id)}
-                >
-                  <Plus className="mr-2 h-3 w-3" />
-                  Add Subject
-                </Button>
+                {editingCategoryId === category.id ? (
+                  <div className="flex items-center gap-2 flex-1 mr-2">
+                    <Input
+                      value={editCategoryName}
+                      onChange={(e) => setEditCategoryName(e.target.value)}
+                      placeholder="Category name"
+                      className="max-w-xs"
+                    />
+                    <Button
+                      size="sm"
+                      onClick={() => handleUpdateCategory(category.id)}
+                      disabled={updatingCategory}
+                    >
+                      {updatingCategory ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => { setEditingCategoryId(null); setEditCategoryName(''); setError(null); }}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                ) : (
+                  <h2 className="text-xl font-semibold">{category.name}</h2>
+                )}
+                <div className="flex items-center gap-2">
+                  {editingCategoryId !== category.id && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setEditingCategoryId(category.id);
+                          setEditCategoryName(category.name);
+                          setError(null);
+                        }}
+                        disabled={!!editingCategoryId}
+                      >
+                        <Pencil className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDeleteCategory(category.id)}
+                        disabled={deletingCategoryId === category.id || (category.subjects?.length ?? 0) > 0}
+                        title={(category.subjects?.length ?? 0) > 0 ? 'Remove all subjects first' : 'Delete category'}
+                      >
+                        {deletingCategoryId === category.id ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-3 w-3 text-destructive" />
+                        )}
+                      </Button>
+                    </>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowCreateSubject(showCreateSubject === category.id ? null : category.id)}
+                  >
+                    <Plus className="mr-2 h-3 w-3" />
+                    Add Subject
+                  </Button>
+                </div>
               </div>
 
               {/* Create Subject Form */}
@@ -275,23 +432,66 @@ export default function AdminCategoriesPage() {
                   {category.subjects.map((subject) => (
                     <span
                       key={subject.id}
-                      className="px-3 py-1 bg-muted rounded-full text-sm"
+                      className="inline-flex items-center gap-1 px-3 py-1 bg-muted rounded-full text-sm"
                     >
-                      {subject.name}
+                      {editingSubjectId === subject.id ? (
+                        <>
+                          <Input
+                            value={editSubjectName}
+                            onChange={(e) => setEditSubjectName(e.target.value)}
+                            placeholder="Subject name"
+                            className="h-7 w-32 text-sm"
+                            onKeyDown={(e) => e.stopPropagation()}
+                          />
+                          <Button
+                            size="sm"
+                            className="h-6 w-6 p-0"
+                            onClick={() => handleUpdateSubject(subject.id)}
+                            disabled={updatingSubject}
+                          >
+                            {updatingSubject ? <Loader2 className="h-3 w-3 animate-spin" /> : '✓'}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0"
+                            onClick={() => { setEditingSubjectId(null); setEditSubjectName(''); setError(null); }}
+                          >
+                            ✕
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          {subject.name}
+                          <button
+                            type="button"
+                            onClick={() => { setEditingSubjectId(subject.id); setEditSubjectName(subject.name); setError(null); }}
+                            className="opacity-70 hover:opacity-100 p-0.5"
+                            aria-label="Edit subject"
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteSubject(subject.id)}
+                            disabled={deletingSubjectId === subject.id}
+                            className="opacity-70 hover:opacity-100 text-destructive p-0.5"
+                            aria-label="Delete subject"
+                          >
+                            {deletingSubjectId === subject.id ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-3 w-3" />
+                            )}
+                          </button>
+                        </>
+                      )}
                     </span>
                   ))}
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground">No subjects in this category</p>
               )}
-
-              {/* TODO Note */}
-              <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-950 rounded-md border border-yellow-200 dark:border-yellow-800">
-                <p className="text-xs text-yellow-800 dark:text-yellow-200">
-                  <strong>TODO:</strong> Update and delete functionality for categories and subjects is not available in API.md. 
-                  Currently only create operations are supported.
-                </p>
-              </div>
             </div>
           ))}
         </div>

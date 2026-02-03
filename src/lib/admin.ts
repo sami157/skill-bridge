@@ -105,3 +105,49 @@ export async function createSubject(name: string, categoryId: string) {
     message: response.message,
   };
 }
+
+/**
+ * Update a category (Admin only)
+ */
+export async function updateCategory(id: string, name: string) {
+  const response = await api.put<Category>(`/categories/${id}`, { name });
+  return {
+    success: response.success,
+    data: response.data,
+    message: response.message,
+  };
+}
+
+/**
+ * Delete a category (Admin only). Fails if category has subjects.
+ */
+export async function deleteCategory(id: string) {
+  const response = await api.delete<unknown>(`/categories/${id}`);
+  return {
+    success: response.success,
+    message: response.message,
+  };
+}
+
+/**
+ * Update a subject (Admin only)
+ */
+export async function updateSubject(id: string, data: { name?: string; categoryId?: string }) {
+  const response = await api.put<Subject>(`/subjects/${id}`, data);
+  return {
+    success: response.success,
+    data: response.data,
+    message: response.message,
+  };
+}
+
+/**
+ * Delete a subject (Admin only)
+ */
+export async function deleteSubject(id: string) {
+  const response = await api.delete<unknown>(`/subjects/${id}`);
+  return {
+    success: response.success,
+    message: response.message,
+  };
+}
