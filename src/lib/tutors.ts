@@ -16,7 +16,7 @@ export async function fetchTutors(filters: TutorsFilters = {}): Promise<TutorsRe
   if (filters.minRating !== undefined) params.append('minRating', filters.minRating.toString());
   if (filters.maxPrice !== undefined) params.append('maxPrice', filters.maxPrice.toString());
   if (filters.sortBy) params.append('sortBy', filters.sortBy);
-  // Note: search query might need to be handled differently if API supports it
+  if (filters.search?.trim()) params.append('search', filters.search.trim());
   
   const queryString = params.toString();
   const endpoint = `/tutors${queryString ? `?${queryString}` : ''}`;

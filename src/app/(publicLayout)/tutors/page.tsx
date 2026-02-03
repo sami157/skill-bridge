@@ -109,21 +109,21 @@ function TutorsPageContent() {
     setDisplayCount(prev => prev + 12);
   };
 
-  // Handle search with debounce
+  // Handle search with debounce — syncs search term to filters and refetches
   useEffect(() => {
     const timer = setTimeout(() => {
       if (localFilters.search !== filters.search) {
-        const newFilters = {
+        const newFilters: TutorsFilters = {
           ...filters,
-          search: localFilters.search || undefined,
+          search: localFilters.search?.trim() || undefined,
         };
         setFilters(newFilters);
         updateURL(newFilters);
       }
-    }, 500);
+    }, 400);
 
     return () => clearTimeout(timer);
-  }, [localFilters.search]);
+  }, [localFilters.search, filters.search]);
 
   const handleFilterChange = (key: keyof typeof localFilters, value: string) => {
     setLocalFilters(prev => ({ ...prev, [key]: value }));
